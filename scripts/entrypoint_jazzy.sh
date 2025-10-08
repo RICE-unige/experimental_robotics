@@ -11,7 +11,7 @@ if [ -f /root/ros2_ws/install/setup.bash ]; then
 fi
 
 # Set up environment variables
-export RMW_IMPLEMENTATION=${RMW_IMPLEMENTATION:-rmw_cyclonedx_cpp}
+export RMW_IMPLEMENTATION=${RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
 export ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-43}
 export ROS_DISTRO=jazzy
 

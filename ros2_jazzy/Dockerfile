@@ -35,7 +35,6 @@ RUN apt-get update && \
       ros-jazzy-nav2-lifecycle-manager \
       ros-jazzy-nav2-map-server \
       ros-jazzy-nav2-planner \
-      ros-jazzy-nav2-recoveries \
       ros-jazzy-nav2-rviz-plugins \
       ros-jazzy-nav2-simple-commander \
       ros-jazzy-nav2-smoother \
@@ -46,15 +45,6 @@ RUN apt-get update && \
       ros-jazzy-slam-toolbox \
       ros-jazzy-cartographer \
       ros-jazzy-cartographer-ros \
-      ros-jazzy-slam-toolbox-rviz-plugins \
-      ros-jazzy-async-slam-toolbox-node \
-      ros-jazzy-sync-slam-toolbox-node \
-      ros-jazzy-localization-slam-toolbox-node \
-      ros-jazzy-lifelong-slam-toolbox-node \
-      # Simulation
-      ros-jazzy-gazebo-ros-pkgs \
-      ros-jazzy-gazebo-plugins \
-      ros-jazzy-gazebo-msgs \
       # Robot models and control
       ros-jazzy-robot-state-publisher \
       ros-jazzy-joint-state-publisher \
@@ -87,7 +77,6 @@ RUN apt-get update && \
       ros-jazzy-rqt-common-plugins \
       ros-jazzy-plotjuggler-ros \
       # Communication
-      ros-jazzy-rmw-cyclonedx-cpp \
       ros-jazzy-rmw-fastrtps-cpp \
       ros-jazzy-example-interfaces \
       ros-jazzy-demo-nodes-cpp \
@@ -100,12 +89,11 @@ RUN apt-get update && \
       # X11 and graphics
       x11-apps \
       mesa-utils \
-      libgl1-mesa-glx \
       libgl1-mesa-dri \
     && rm -rf /var/lib/apt/lists/*
 
 # Install additional Python packages for robotics
-RUN pip3 install --no-cache-dir \
+RUN pip3 install --no-cache-dir --break-system-packages \
     numpy \
     scipy \
     matplotlib \
@@ -124,7 +112,7 @@ WORKDIR $ROS2_WS
 
 # Setup environment
 RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc && \
-    echo "export RMW_IMPLEMENTATION=rmw_cyclonedx_cpp" >> /root/.bashrc && \
+    echo "export RMW_IMPLEMENTATION=rmw_fastrtps_cpp" >> /root/.bashrc && \
     echo "export ROS_DOMAIN_ID=\${ROS_DOMAIN_ID:-43}" >> /root/.bashrc && \
     echo "alias build='colcon build --symlink-install'" >> /root/.bashrc && \
     echo "alias source_ws='source install/setup.bash'" >> /root/.bashrc && \

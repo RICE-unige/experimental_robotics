@@ -6,7 +6,7 @@ services:
     hostname: ros2-humble
     networks: [rosnet]
     environment:
-      RMW_IMPLEMENTATION: rmw_cyclonedx_cpp
+      RMW_IMPLEMENTATION: rmw_fastrtps_cpp
       ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-42}
       DISPLAY: ${DISPLAY:-:0}
       QT_X11_NO_MITSHM: "1"
@@ -46,7 +46,7 @@ services:
     hostname: ros2-jazzy
     networks: [rosnet]
     environment:
-      RMW_IMPLEMENTATION: rmw_cyclonedx_cpp
+      RMW_IMPLEMENTATION: rmw_fastrtps_cpp
       ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
       DISPLAY: ${DISPLAY:-:0}
       QT_X11_NO_MITSHM: "1"
@@ -88,7 +88,7 @@ services:
     hostname: ros2-dev
     networks: [rosnet]
     environment:
-      RMW_IMPLEMENTATION: rmw_cyclonedx_cpp
+      RMW_IMPLEMENTATION: rmw_fastrtps_cpp
       ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
       DISPLAY: ${DISPLAY:-:0}
       QT_X11_NO_MITSHM: "1"

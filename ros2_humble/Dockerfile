@@ -46,11 +46,6 @@ RUN apt-get update && \
       ros-humble-slam-toolbox \
       ros-humble-cartographer \
       ros-humble-cartographer-ros \
-      ros-humble-slam-toolbox-rviz-plugins \
-      ros-humble-async-slam-toolbox-node \
-      ros-humble-sync-slam-toolbox-node \
-      ros-humble-localization-slam-toolbox-node \
-      ros-humble-lifelong-slam-toolbox-node \
       # Simulation
       ros-humble-gazebo-ros-pkgs \
       ros-humble-gazebo-plugins \
@@ -87,7 +82,6 @@ RUN apt-get update && \
       ros-humble-rqt-common-plugins \
       ros-humble-plotjuggler-ros \
       # Communication
-      ros-humble-rmw-cyclonedx-cpp \
       ros-humble-rmw-fastrtps-cpp \
       ros-humble-example-interfaces \
       ros-humble-demo-nodes-cpp \
@@ -100,12 +94,11 @@ RUN apt-get update && \
       # X11 and graphics
       x11-apps \
       mesa-utils \
-      libgl1-mesa-glx \
       libgl1-mesa-dri \
     && rm -rf /var/lib/apt/lists/*
 
 # Install additional Python packages for robotics
-RUN pip3 install --no-cache-dir \
+RUN pip3 install --no-cache-dir --break-system-packages \
     numpy \
     scipy \
     matplotlib \
@@ -124,7 +117,7 @@ WORKDIR $ROS2_WS
 
 # Setup environment
 RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc && \
-    echo "export RMW_IMPLEMENTATION=rmw_cyclonedx_cpp" >> /root/.bashrc && \
+    echo "export RMW_IMPLEMENTATION=rmw_fastrtps_cpp" >> /root/.bashrc && \
     echo "export ROS_DOMAIN_ID=\${ROS_DOMAIN_ID:-42}" >> /root/.bashrc && \
     echo "alias build='colcon build --symlink-install'" >> /root/.bashrc && \
     echo "alias source_ws='source install/setup.bash'" >> /root/.bashrc && \
