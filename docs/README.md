@@ -72,7 +72,6 @@ docker compose exec ros2_humble bash
 
 ## Next steps
 
-- Read the [Syllabus](syllabus/README.md)
 - Complete the [Setup](setup/README.md)
 - Review [ROS 2 Basics](ros2/README.md)
 - Explore [Simulation](simulation/README.md)
