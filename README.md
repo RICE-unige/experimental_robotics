@@ -1,6 +1,22 @@
-# Experimental Robotics Docker Environment
+# Experimental Robotics Course
 
-Docker-based development environment for the Experimental Robotics course at University of Genoa, featuring ROS2 Humble and ROS2 Jazzy with navigation, simulation, and development tools.
+[![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![GitBook](https://img.shields.io/static/v1?message=Documented%20on%20GitBook&logo=gitbook&logoColor=ffffff&label=%20&labelColor=5c5c5c&color=3F89A1)](https://rice-unige.gitbook.io/experimental-robotics/)
+[![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![ROS2 Jazzy](https://img.shields.io/badge/ROS2-Jazzy-purple?logo=ros&logoColor=white)](https://docs.ros.org/en/jazzy/)
+[![ROS2 Humble](https://img.shields.io/badge/ROS2-Humble-blue?logo=ros&logoColor=white)](https://docs.ros.org/en/humble/)
+
+
+<p align="center">
+  <img src="imgs/ricelab_logo.jpg" alt="RICELab" height="30" style="margin-right: 16px;">
+  <img src="imgs/university_of_genoa_logo.png" alt="University of Genoa" height="30">
+</p>
+
+> [!WARNING]  
+> This repository is actively in development and is **not yet ready for use**. Students will be informed by the professor when the repository, projects, and assignments are ready for the course.
+
+
+Docker-based development environment for the Experimental Robotics course at University of Genoa, featuring ROS2 Humble and ROS2 Jazzy with slam, navigation, simulation, and development tools.
 
 ## Prerequisites
 
@@ -25,6 +41,7 @@ xhost +local:docker
 
 # Access container
 docker compose exec ros2_jazzy bash
+docker compose exec ros2_humble bash
 ```
 
 ## 📚 Documentation
@@ -53,4 +70,4 @@ You can also create an issue in this repository for technical problems.
 
 ---
 
-**University of Genoa - RICELab** 
+© 2025 **University of Genoa - RICELab**
