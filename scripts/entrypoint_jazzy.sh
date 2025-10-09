@@ -16,16 +16,21 @@ export ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-43}
 export ROS_DISTRO=jazzy
 
 # Graphics/Gazebo environment - Auto-detect GPU or use software rendering
+export GZ_RENDER_ENGINE=ogre2
+export OGRE_RHI=OpenGL
+export QT_X11_NO_MITSHM=1
+
 if [ -d /dev/dri ] && [ -n "$(ls -A /dev/dri 2>/dev/null)" ]; then
-    echo "GPU detected - using hardware acceleration"
-    export GZ_RENDERING_ENGINE=ogre2
+    echo "GPU detected - using hardware acceleration (OpenGL)"
+    # HW path - unset software rendering variables
+    unset LIBGL_ALWAYS_SOFTWARE GALLIUM_DRIVER MESA_LOADER_DRIVER_OVERRIDE
 else
     echo "No GPU detected - using software rendering"
+    # SW fallback (slow but works)
     export LIBGL_ALWAYS_SOFTWARE=1
     export GALLIUM_DRIVER=llvmpipe
-    export GZ_RENDERING_ENGINE=ogre
 fi
-export MESA_GL_VERSION_OVERRIDE=3.3
+
 export XDG_RUNTIME_DIR=/tmp/runtime-dir
 rm -rf /tmp/runtime-dir
 mkdir -p /tmp/runtime-dir

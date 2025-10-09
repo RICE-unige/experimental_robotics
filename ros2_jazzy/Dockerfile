@@ -4,6 +4,11 @@ FROM osrf/ros:jazzy-desktop-full
 ENV DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-lc"]
 
+# Global Gazebo rendering environment
+ENV QT_X11_NO_MITSHM=1 \
+    GZ_RENDER_ENGINE=ogre2 \
+    OGRE_RHI=OpenGL
+
 # Update and install essential packages
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -107,6 +112,14 @@ RUN apt-get update && \
       libxtst6 \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Vulkan userspace and additional GUI libraries
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    mesa-vulkan-drivers \
+    libvulkan1 \
+    vulkan-tools \
+    libxkbcommon-x11-0 \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install additional Python packages for robotics
 RUN pip3 install --no-cache-dir --break-system-packages \
     numpy \
@@ -140,15 +153,18 @@ RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc && \
     echo "alias slam-offline='ros2 launch slam_toolbox offline_launch.py'" >> /root/.bashrc && \
     echo "alias slam-localization='ros2 launch slam_toolbox localization_launch.py'" >> /root/.bashrc && \
     echo "alias slam-lifelong='ros2 launch slam_toolbox lifelong_launch.py'" >> /root/.bashrc && \
-    echo "# Graphics setup - Auto-detect GPU or use software rendering" >> /root/.bashrc && \
+    echo "# --- Gazebo rendering selection ---" >> /root/.bashrc && \
+    echo "export GZ_RENDER_ENGINE=ogre2" >> /root/.bashrc && \
+    echo "export OGRE_RHI=OpenGL" >> /root/.bashrc && \
+    echo "export QT_X11_NO_MITSHM=1" >> /root/.bashrc && \
     echo "if [ -d /dev/dri ] && [ -n \"\$(ls -A /dev/dri 2>/dev/null)\" ]; then" >> /root/.bashrc && \
-    echo "  export GZ_RENDERING_ENGINE=ogre2" >> /root/.bashrc && \
+    echo "  # HW path" >> /root/.bashrc && \
+    echo "  unset LIBGL_ALWAYS_SOFTWARE GALLIUM_DRIVER MESA_LOADER_DRIVER_OVERRIDE" >> /root/.bashrc && \
     echo "else" >> /root/.bashrc && \
+    echo "  # SW fallback (slow but works)" >> /root/.bashrc && \
     echo "  export LIBGL_ALWAYS_SOFTWARE=1" >> /root/.bashrc && \
     echo "  export GALLIUM_DRIVER=llvmpipe" >> /root/.bashrc && \
-    echo "  export GZ_RENDERING_ENGINE=ogre" >> /root/.bashrc && \
     echo "fi" >> /root/.bashrc && \
-    echo "export MESA_GL_VERSION_OVERRIDE=3.3" >> /root/.bashrc && \
     echo "export XDG_RUNTIME_DIR=/tmp/runtime-dir" >> /root/.bashrc && \
     echo "mkdir -p /tmp/runtime-dir && chmod 0700 /tmp/runtime-dir 2>/dev/null || true" >> /root/.bashrc
 
