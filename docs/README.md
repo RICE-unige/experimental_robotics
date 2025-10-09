@@ -18,7 +18,7 @@ layout:
 
 # Developer Platform
 
-<h2 align="center">Developer platform template</h2>
+<h2 align="center">Experimental Robotics Course</h2>
 
 <p align="center">Welcome to your team’s new developer platform</p>
 
