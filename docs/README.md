@@ -1,83 +1,81 @@
 ---
-description: Welcome to your team’s developer platform
+description: Course hub for the Experimental Robotics course (RICELab, University of Genoa)
 layout:
   width: wide
   title:
-    visible: false
+    visible: true
   description:
-    visible: false
+    visible: true
   tableOfContents:
-    visible: false
+    visible: true
   outline:
-    visible: false
+    visible: true
   pagination:
-    visible: false
+    visible: true
   metadata:
     visible: true
 ---
 
-# Developer Platform
+# Experimental Robotics
 
-<h2 align="center">Experimental Robotics Course</h2>
+> [!WARNING]
+> This documentation is a work in progress. Students will be informed when the assignments and projects are ready.
 
-<p align="center"></p>
+Welcome to the Experimental Robotics course documentation. This space accompanies the Docker-based development environment in the repository and provides the syllabus, setup steps, labs, assignments, ROS 2 notes, and project guidelines.
 
-<p align="center">Another test, </p>
+## What you’ll find here
 
-<p align="center">Another change just for testing</p>
+- Course overview and syllabus
+- Step-by-step environment setup (ROS 2 Jazzy and Humble)
+- Labs and assignments with tips and references
+- ROS 2 basics and quick commands for development
+- Simulation, SLAM, and Navigation notes
+- Final project requirements and evaluation rubric
 
-<p align="center">Welcome to your team’s new developer platform</p>
+## Quick start
 
-<p align="center"><a href="http://app.gitbook.com/join" class="button primary">Sign up</a> <a href="http://app.gitbook.com/join" class="button secondary">Log in</a></p>
+Run these from your host machine to start a course container and access ROS 2:
 
-<table data-view="cards"><thead><tr><th></th><th></th><th></th><th data-hidden data-card-target data-type="content-ref"></th><th data-hidden data-card-cover data-type="files"></th></tr></thead><tbody><tr><td><h4><i class="fa-leaf">:leaf:</i></h4></td><td><strong>No code</strong></td><td>Get started with the developer platform in 5 minutes.</td><td><a href="https://app.gitbook.com/o/BD6UBBHloVaDpAe0m9y2/s/m2yp6geAkWo6xLFeoROf/">Documentation</a></td><td><a href=".gitbook/assets/no-code.jpg">no-code.jpg</a></td></tr><tr><td><h4><i class="fa-server">:server:</i></h4></td><td><strong>Hosted</strong></td><td>Learn more about hosting the developer platform.</td><td><a href="https://app.gitbook.com/o/BD6UBBHloVaDpAe0m9y2/s/m2yp6geAkWo6xLFeoROf/">Documentation</a></td><td><a href=".gitbook/assets/hosted.jpg">hosted.jpg</a></td></tr><tr><td><h4><i class="fa-terminal">:terminal:</i></h4></td><td><strong>API reference</strong></td><td>Browse, test, and implement APIs.</td><td><a href="https://app.gitbook.com/o/BD6UBBHloVaDpAe0m9y2/s/THmK9vDfF7RxPvq8HsBG/">API Reference</a></td><td><a href=".gitbook/assets/api-reference.jpg">api-reference.jpg</a></td></tr></tbody></table>
+```bash
+# Clone the repository
+git clone https://github.com/RICE-unige/experimental_robotics.git
+cd experimental_robotics
 
-{% columns %}
-{% column %}
-### Get started in 5 minutes
+# Enable GUI applications on Linux
+xhost +local:docker
 
-Setting up your first API call should be the easiest part of getting started. With clear endpoints, copy-paste-ready examples, and quick authentication, you’ll be up and running in minutes—not hours.
+# Start environment (choose one)
+./start.sh                    # ROS2 Jazzy (default)
+./start.sh --profile humble   # ROS2 Humble
+./start.sh --profile all      # Both distributions (same domain)
 
-No guesswork, no complexity—just your first successful call, fast.
-
-<a href="https://app.gitbook.com/o/BD6UBBHloVaDpAe0m9y2/s/m2yp6geAkWo6xLFeoROf/" class="button primary" data-icon="rocket-launch">Get started</a> <a href="https://app.gitbook.com/o/BD6UBBHloVaDpAe0m9y2/s/THmK9vDfF7RxPvq8HsBG/" class="button secondary" data-icon="terminal">API reference</a>
-{% endcolumn %}
-
-{% column %}
-{% code title="index.js" overflow="wrap" %}
-```javascript
-// Import the SDK
-import ExampleAPI from "example-api";
-
-// Initialize the client
-const client = new ExampleAPI({ apiKey: "YOUR_API_KEY" });
-
-// Send your first message
-const response = await client.messages.send({
-  message: "Hello, world!"
-});
-
+# Access a running container shell
+docker compose exec ros2_jazzy bash
+# or
+docker compose exec ros2_humble bash
 ```
-{% endcode %}
-{% endcolumn %}
-{% endcolumns %}
 
-{% columns %}
-{% column %}
-<figure><img src="https://gitbookio.github.io/onboarding-template-images/placeholder.png" alt=""><figcaption></figcaption></figure>
-{% endcolumn %}
+> [!TIP]
+> If you have an NVIDIA GPU and drivers installed, the setup supports GPU acceleration via the NVIDIA Container Toolkit.
 
-{% column %}
-### Learn more about the developer platform
+## Available environments
 
-Read guides, watch tutorials, and learn more about working with the developer platform and integrating it with your own stack.
+- jazzy — ROS 2 Jazzy (default, recommended for assignments)
+- humble — ROS 2 Humble LTS (stable, for compatibility testing)
+- all — Run Jazzy and Humble together on the same domain
 
-<a href="https://app.gitbook.com/o/BD6UBBHloVaDpAe0m9y2/s/l1Bzj0jhWcih5d7CTRHQ/" class="button primary" data-icon="book-open">Guides</a> <a href="https://app.gitbook.com/o/BD6UBBHloVaDpAe0m9y2/s/m2yp6geAkWo6xLFeoROf/" class="button secondary" data-icon="book">Documentation</a>
-{% endcolumn %}
-{% endcolumns %}
+## Support
 
-<h2 align="center">Join a community of over 3,000 developers</h2>
+- Teaching Assistant: Omotoye Adekoya — omotoye.adekoya@edu.unige.it
+- Course Professor: Prof. Carmine Recchiuto — carmine.recchiuto@unige.it
+- For technical issues, open a GitHub issue in the repository.
 
-<p align="center">Join our Discord community or create your first PR in just a few steps.</p>
+## Next steps
 
-<table data-card-size="large" data-view="cards"><thead><tr><th></th><th></th><th></th><th></th><th data-hidden data-card-cover data-type="files"></th></tr></thead><tbody><tr><td><h4><i class="fa-discord">:discord:</i></h4></td><td><strong>Discord community</strong></td><td>Join our Discord community to post questions, get help, and share resources with over 3,000 like-minded developers.</td><td><a href="https://www.gitbook.com/" class="button secondary">Join Discord</a></td><td></td></tr><tr><td><h4><i class="fa-github">:github:</i></h4></td><td><strong>GitHub</strong></td><td>Our product is 100% open source and built by developers just like you. Head to our GitHub repository to learn how to submit your first PR.</td><td><a href="https://www.gitbook.com/" class="button secondary">Submit a PR</a></td><td></td></tr></tbody></table>
+- Read the [Syllabus](syllabus/README.md)
+- Complete the [Setup](setup/README.md)
+- Review [ROS 2 Basics](ros2/README.md)
+- Explore [Simulation](simulation/README.md)
+- Check [Labs](labs/README.md) and [Assignments](assignments/README.md)
+- See the [Final Project](final-project/README.md) brief
+- Browse [Resources](resources.md) and the [FAQ](faq.md)
