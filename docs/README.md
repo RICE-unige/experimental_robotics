@@ -20,6 +20,10 @@ layout:
 
 <h2 align="center">Experimental Robotics Course</h2>
 
+<p align="center"></p>
+
+<p align="center">Another test</p>
+
 <p align="center">Welcome to your team’s new developer platform</p>
 
 <p align="center"><a href="http://app.gitbook.com/join" class="button primary">Sign up</a> <a href="http://app.gitbook.com/join" class="button secondary">Log in</a></p>
