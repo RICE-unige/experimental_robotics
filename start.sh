@@ -36,14 +36,13 @@ while [[ $# -gt 0 ]]; do
             echo "Usage: $0 [options]"
             echo ""
             echo "Options:"
-            echo "  --profile PROFILE   Choose environment: jazzy (default), humble, dev, all"
+            echo "  --profile PROFILE   Choose environment: jazzy (default), humble, all"
             echo "  --build             Force rebuild of containers"
             echo "  --help, -h          Show this help message"
             echo ""
             echo "Examples:"
             echo "  $0                    # Start ROS2 Jazzy"
             echo "  $0 --profile humble  # Start ROS2 Humble"
-            echo "  $0 --profile dev      # Start development environment"
             echo "  $0 --profile all      # Start both Humble and Jazzy"
             echo ""
             echo "📚 For detailed documentation and tutorials:"
@@ -60,11 +59,11 @@ done
 
 # Validate profile
 case $PROFILE in
-    humble|jazzy|all|dev)
+    humble|jazzy|all)
         ;;
     *)
         echo "ERROR: Invalid profile '$PROFILE'"
-        echo "Valid profiles: humble, jazzy, all, dev"
+        echo "Valid profiles: humble, jazzy, all"
         exit 1
         ;;
 esac
@@ -82,20 +81,6 @@ if [ "$PROFILE" = "all" ]; then
     echo "Access containers with:"
     echo "  docker compose exec ros2_humble bash    # For ROS2 Humble"
     echo "  docker compose exec ros2_jazzy bash     # For ROS2 Jazzy"
-elif [ "$PROFILE" = "dev" ]; then
-    echo "Starting development environment..."
-    docker compose --profile dev up -d $BUILD_FLAG
-    echo ""
-    echo "Development environment started successfully!"
-    echo ""
-    echo "Access container with:"
-    echo "  docker compose exec ros2_dev bash"
-    echo ""
-    echo "Development features available:"
-    echo "  - Debugging tools (GDB, Valgrind)"
-    echo "  - Code formatting (clang-format)"
-    echo "  - Testing framework"
-    echo "  - Jupyter Lab support"
 else
     echo "Starting ROS2 $PROFILE environment..."
     docker compose --profile $PROFILE up -d $BUILD_FLAG

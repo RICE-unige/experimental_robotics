@@ -21,8 +21,7 @@ xhost +local:docker
 # Start environment (choose one):
 ./start.sh                    # ROS2 Jazzy (default)
 ./start.sh --profile humble   # ROS2 Humble  
-./start.sh --profile dev      # Development environment
-./start.sh --profile all      # Both distributions
+./start.sh --profile all      # Both distributions (same domain)
 
 # Access container
 docker compose exec ros2_jazzy bash
@@ -38,8 +37,7 @@ For detailed documentation, tutorials, and assignments, visit our **GitBook page
 
 - **`jazzy`**: ROS2 Jazzy (default, latest features, recommended for assignments)
 - **`humble`**: ROS2 Humble LTS (stable, for compatibility testing)
-- **`dev`**: Development environment with debugging tools  
-- **`all`**: Both distributions for cross-compatibility testing
+- **`all`**: Both distributions on same domain for cross-compatibility communication
 
 ## 🆘 Support
 
