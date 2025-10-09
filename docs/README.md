@@ -22,7 +22,9 @@ layout:
 
 <p align="center"></p>
 
-<p align="center">Another test</p>
+<p align="center">Another test, </p>
+
+<p align="center">Another change just for testing</p>
 
 <p align="center">Welcome to your team’s new developer platform</p>
 
