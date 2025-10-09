@@ -7,12 +7,14 @@ services:
     networks: [rosnet]
     environment:
       RMW_IMPLEMENTATION: rmw_fastrtps_cpp
-      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-42}
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
       DISPLAY: ${DISPLAY:-:0}
       QT_X11_NO_MITSHM: "1"
       NVIDIA_VISIBLE_DEVICES: all
       NVIDIA_DRIVER_CAPABILITIES: all
       ROS_DISTRO: humble
+      # Graphics/Gazebo environment (configured dynamically in container)
+      XDG_RUNTIME_DIR: /tmp/runtime-dir
     volumes:
       # X11 forwarding for GUI applications
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
@@ -37,7 +39,7 @@ services:
     profiles: ["humble", "all"]
     stdin_open: true
     tty: true
-    command: bash -c "source /opt/ros/humble/setup.bash && /root/scripts/entrypoint_humble.sh"
+    command: bash -c "source /opt/ros/humble/setup.bash && /root/scripts/entrypoint_humble.sh && tail -f /dev/null"
 
   ros2_jazzy:
     build:
@@ -53,6 +55,8 @@ services:
       NVIDIA_VISIBLE_DEVICES: all
       NVIDIA_DRIVER_CAPABILITIES: all
       ROS_DISTRO: jazzy
+      # Graphics/Gazebo environment (configured dynamically in container)
+      XDG_RUNTIME_DIR: /tmp/runtime-dir
     volumes:
       # X11 forwarding for GUI applications
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
@@ -77,50 +81,7 @@ services:
     profiles: ["jazzy", "all"]
     stdin_open: true
     tty: true
-    command: bash -c "source /opt/ros/jazzy/setup.bash && /root/scripts/entrypoint_jazzy.sh"
-
-  # ROS2 Development Environment (Humble-based with additional dev tools)
-  ros2_dev:
-    build:
-      context: ./ros2_humble
-      dockerfile: Dockerfile.dev
-    container_name: experimental_robotics_dev
-    hostname: ros2-dev
-    networks: [rosnet]
-    environment:
-      RMW_IMPLEMENTATION: rmw_fastrtps_cpp
-      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
-      DISPLAY: ${DISPLAY:-:0}
-      QT_X11_NO_MITSHM: "1"
-      NVIDIA_VISIBLE_DEVICES: all
-      NVIDIA_DRIVER_CAPABILITIES: all
-      ROS_DISTRO: humble
-    volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - ./ros2_humble_ws:/root/ros2_ws:rw
-      - ./ros2_jazzy_ws:/root/ros2_jazzy_ws:rw
-      - ./config:/root/config:ro
-      - ./scripts:/root/scripts:ro
-      # Mount host's .ssh for git access (optional)
-      - ~/.ssh:/root/.ssh:ro
-      # Mount host's .gitconfig (optional)
-      - ~/.gitconfig:/root/.gitconfig:ro
-    shm_size: "4gb"
-    devices:
-      - /dev/dri:/dev/dri
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    privileged: true
-    restart: unless-stopped
-    profiles: ["dev"]
-    stdin_open: true
-    tty: true
-    command: bash -c "source /opt/ros/humble/setup.bash && /root/scripts/entrypoint_dev.sh"
+    command: bash -c "source /opt/ros/jazzy/setup.bash && /root/scripts/entrypoint_jazzy.sh && tail -f /dev/null"
 
 networks:
   rosnet:
