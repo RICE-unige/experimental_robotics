@@ -21,11 +21,10 @@ layout:
 > [!WARNING]
 > This documentation is a work in progress. Students will be informed when the assignments and projects are ready.
 
-Welcome to the Experimental Robotics course documentation. This space accompanies the Docker-based development environment in the repository and provides the syllabus, setup steps, labs, assignments, ROS 2 notes, and project guidelines.
+Welcome to the Experimental Robotics course documentation. This space accompanies the Docker-based development environment in the repository and provides the setup steps, labs, assignments, ROS 2 notes, and project guidelines.
 
 ## What you’ll find here
 
-- Course overview and syllabus
 - Step-by-step environment setup (ROS 2 Jazzy and Humble)
 - Labs and assignments with tips and references
 - ROS 2 basics and quick commands for development
