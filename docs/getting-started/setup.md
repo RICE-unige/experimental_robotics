@@ -1,39 +1,33 @@
-# Setup
+# Getting Started
 
-Setting up the Experimental Robotics development environment.
+Set up the Experimental Robotics development environment on your workstation and confirm everything is ready before you dive into development or simulation.
 
 ## Prerequisites
 
 ### System Requirements
 
-- **OS:** Linux (Ubuntu 20.04+) or macOS with Docker support
-- **Docker Engine:** >= 20.10
-- **Docker Compose:** >= 2.0
-- **Disk Space:** 20GB (minimum, 40GB recommended for multiple images)
-- **RAM:** 8GB (16GB recommended for simulation)
+- Linux (Ubuntu 20.04+) or macOS with Docker support
+- Docker Engine ≥ 20.10 and Docker Compose ≥ 2.0
+- 20 GB free disk space (40 GB recommended for multiple simulators)
+- 8 GB RAM minimum (16 GB recommended for Gazebo/Webots)
 
-### X11 Forwarding (Linux only)
+> [!note]
+> Windows users can follow these steps inside WSL2 with Docker Desktop, but native Linux offers the smoothest experience—especially for GUI applications.
 
-For GUI applications (Gazebo, RViz2, etc.), enable X11 forwarding:
+### Enable X11 (Linux GUI Support)
 
 ```bash
-# Check X11 is running
-echo $DISPLAY
-
-# Allow Docker containers to connect to X11
-xhost +local:docker
+echo $DISPLAY            # Confirm X11 is running
+xhost +local:docker      # Permit containers to use your display
 ```
 
-### Optional: GPU Support
+### Optional: NVIDIA GPU Acceleration
 
-For GPU-accelerated simulations:
-
-1. **Install NVIDIA drivers**
+1. Confirm drivers are installed:
    ```bash
-   nvidia-smi  # Verify drivers are installed
+   nvidia-smi
    ```
-
-2. **Install NVIDIA Container Toolkit**
+2. Install the NVIDIA Container Toolkit:
    ```bash
    distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
    curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
@@ -42,11 +36,13 @@ For GPU-accelerated simulations:
    sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
    sudo systemctl restart docker
    ```
-
-3. **Verify GPU access**
+3. Verify Docker can see the GPU:
    ```bash
    docker run --rm --gpus all nvidia/cuda:12.0.0-base-ubuntu22.04 nvidia-smi
    ```
+
+> [!tip]
+> Export `NVIDIA_VISIBLE_DEVICES=void` before running the helper scripts if you want to test the CPU-only fallback.
 
 ## Quick Installation
 
@@ -64,88 +60,73 @@ docker --version
 docker compose version
 ```
 
-### 3. Start Development Container
+### 3. Launch a Development Container
 
-=== "Jazzy (Recommended)"
+{% tabs %}
+{% tab title="ROS 2 Jazzy (recommended)" %}
+```bash
+./run.sh dev jazzy
+```
+{% endtab %}
 
-    ```bash
-    ./run.sh dev jazzy
-    ```
+{% tab title="ROS 2 Humble" %}
+```bash
+./run.sh dev humble
+```
+{% endtab %}
+{% endtabs %}
 
-=== "Humble"
-
-    ```bash
-    ./run.sh dev humble
-    ```
-
-### 4. Access the Container
+### 4. Access the Container Shell
 
 ```bash
-# Auto-detect and connect
-./connect.sh dev
-
-# Or manually
-docker compose exec dev_jazzy bash
+./connect.sh dev          # Auto-detect active dev container
+docker compose exec dev_jazzy bash  # Manual alternative
 ```
 
-## Verifying Installation
+## Verify the Environment
 
-Once inside the container, verify ROS 2 is working:
+Run these checks from inside the container:
 
 ```bash
-# Check ROS 2 version
 ros2 --version
-
-# List installed packages
 ros2 pkg list | head
 
-# Test talker/listener
-# Terminal 1:
+# Demo publisher/subscriber pair
 ros2 run demo_nodes_cpp talker
-
-# Terminal 2 (new terminal in same container):
+# In another terminal attached to the same container
 ros2 run demo_nodes_cpp listener
 ```
 
-## Common Issues
+## Troubleshooting
 
-### X11 Forwarding Not Working
+### GUI Not Displaying
 
 ```bash
-# Try enabling verbose X11 logging
 export QT_DEBUG_PLUGINS=1
-./connect.sh dev
-
-# Check DISPLAY variable
 echo $DISPLAY
+./connect.sh dev
 ```
 
-### Permission Denied
+Ensure `xhost +local:docker` ran on the host and retry the container.
+
+### Permission Denied Errors
 
 ```bash
-# Ensure Docker daemon is running
 sudo systemctl start docker
-
-# Add user to docker group (Linux)
 sudo usermod -aG docker $USER
 newgrp docker
 ```
 
-### Out of Disk Space
+### Running Out of Disk Space
 
 ```bash
-# Clean up old images
 docker image prune -a
-
-# Remove unused containers
 docker container prune
-
-# Clear build cache
 docker builder prune
 ```
 
-## Next Steps
+## Where to Go Next
 
-- 📚 [ROS 2 Basics](../course/ros2-basics.md)
-- 🎮 [Start a Simulation](../course/simulation.md)
-- 📝 [Review Labs](../course/labs.md)
+- Read the [GPU Setup](../reference/gpu-setup.md) guide if you plan to use hardware acceleration.
+- Check the [FAQ](../reference/faq.md) whenever you hit a workflow snag.
+- Explore the [Resources](../reference/resources.md) list for deeper ROS 2 learning material.

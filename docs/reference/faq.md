@@ -1,6 +1,6 @@
 # FAQ
 
-Frequently asked questions about the Experimental Robotics course and development environment.
+Frequently asked questions about the Experimental Robotics documentation and development environment.
 
 ## Setup & Environment
 
@@ -170,34 +170,6 @@ Then use arrow keys to drive.
 2. Click on map where you want the robot to go
 3. Drag arrow to point robot in desired direction
 
-## Assignments & Projects
-
-### Q: Do I really need to write everything from scratch?
-
-**A:** Yes for assignments, but you can:
-
-- Use ROS 2 packages and examples
-- Follow tutorials and adapt code
-- Use proper attribution and citations
-
-See [CODE_OF_CONDUCT.md](../../CODE_OF_CONDUCT.md) for guidelines.
-
-### Q: Can I use ChatGPT/Copilot?
-
-**A:** Yes, but:
-
-1. **You must disclose it** - Note that you used AI tools
-2. **You must understand it** - Be able to explain every line
-3. **You must test it** - Verify it works in your environment
-4. **Don't submit without review** - AI-generated code needs review before submission
-
-### Q: What if I'm stuck on an assignment?
-
-**A:** 
-
-1. Check course materials and examples
-2. Review [Resources](resources.md) section
-3. Check GitHub Issues for similar problems
 4. Email TA or ask in office hours (don't share code, just ask concepts)
 
 ## Contributing & GitHub

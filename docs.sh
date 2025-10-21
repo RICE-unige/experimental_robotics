@@ -1,151 +1,80 @@
 #!/bin/bash
 
-# MkDocs helper script for building and serving documentation
+# GitBook helper script for the documentation workspace
 
-set -e
+set -euo pipefail
 
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-# Get script directory
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DOCS_DIR="${SCRIPT_DIR}/docs"
+OUTPUT_DIR="${DOCS_DIR}/site"
 
-# Help function
 show_help() {
-    cat << EOF
-${BLUE}MkDocs Documentation Helper${NC}
+    cat <<'EOF'
+Experimental Robotics ─ GitBook helper
 
-${GREEN}Usage:${NC}
-    ./docs.sh [COMMAND] [OPTIONS]
+Usage:
+  ./docs.sh help           Show this message
+  ./docs.sh preview        Start a local GitBook preview (requires Node.js + npx)
+  ./docs.sh build          Export a static build to docs/site (requires Node.js + npx)
+  ./docs.sh clean          Remove docs/site
 
-${GREEN}Commands:${NC}
-    serve       Build and serve documentation locally (default)
-    build       Build documentation without serving
-    clean       Remove built documentation
-    install     Install MkDocs dependencies
-    help        Show this help message
-
-${GREEN}Examples:${NC}
-    ./docs.sh               # Build and serve at http://localhost:8000
-    ./docs.sh serve         # Same as above
-    ./docs.sh build         # Build only, don't serve
-    ./docs.sh clean         # Clean build artifacts
-    ./docs.sh install       # Install dependencies
-
-${GREEN}Options:${NC}
-    For serve: mkdocs serve options are passed through
-    Example: ./docs.sh serve --dev-addr=0.0.0.0:8080
-
-${GREEN}Note:${NC}
-    - Requires Python 3.7+
-    - Install dependencies with: ./docs.sh install
-    - Access docs at http://localhost:8000 (default)
+Notes:
+  • The content is edited directly in Markdown under docs/.
+  • Navigation is controlled through docs/SUMMARY.md.
+  • If you manage the space in app.gitbook.com, push changes here first to keep it in sync.
 EOF
 }
 
-# Check if Python is available
-check_python() {
-    if ! command -v python3 &> /dev/null; then
-        echo -e "${RED}Error: Python 3 is not installed${NC}"
-        echo "Please install Python 3.7 or later"
+require_npx() {
+    if ! command -v npx >/dev/null 2>&1; then
+        echo "Error: npx (Node.js) is required for this command." >&2
+        echo "Install Node.js LTS from https://nodejs.org/ and try again." >&2
         exit 1
     fi
 }
 
-# Install dependencies
-install_deps() {
-    echo -e "${BLUE}Installing MkDocs dependencies...${NC}"
-    check_python
-    
-    if [ ! -f "requirements.txt" ]; then
-        echo -e "${RED}Error: requirements.txt not found${NC}"
-        exit 1
-    fi
-    
-    python3 -m pip install -r requirements.txt
-    echo -e "${GREEN}✓ Dependencies installed successfully${NC}"
+preview_docs() {
+    require_npx
+    echo "Starting GitBook local preview on http://localhost:4000 ..."
+    echo "Press Ctrl+C to stop."
+    (cd "${DOCS_DIR}" && exec npx @gitbook/cli@latest dev)
 }
 
-# Build documentation
 build_docs() {
-    echo -e "${BLUE}Building documentation...${NC}"
-    check_python
-    
-    # Check if mkdocs is installed
-    if ! python3 -m mkdocs --version &> /dev/null; then
-        echo -e "${RED}Error: mkdocs is not installed${NC}"
-        echo "Run: ./docs.sh install"
-        exit 1
-    fi
-    
-    python3 -m mkdocs build
-    echo -e "${GREEN}✓ Documentation built successfully${NC}"
-    echo -e "  Output: ${SCRIPT_DIR}/site/"
+    require_npx
+    mkdir -p "${OUTPUT_DIR}"
+    echo "Building static documentation into ${OUTPUT_DIR} ..."
+    (cd "${DOCS_DIR}" && npx @gitbook/cli@latest build --output "${OUTPUT_DIR}")
+    echo "Build complete."
 }
 
-# Serve documentation
-serve_docs() {
-    echo -e "${BLUE}Serving documentation...${NC}"
-    check_python
-    
-    # Check if mkdocs is installed
-    if ! python3 -m mkdocs --version &> /dev/null; then
-        echo -e "${RED}Error: mkdocs is not installed${NC}"
-        echo "Run: ./docs.sh install"
-        exit 1
-    fi
-    
-    echo -e "${GREEN}✓ Starting server...${NC}"
-    echo -e "  Access at: ${BLUE}http://localhost:8000${NC}"
-    echo -e "  Press Ctrl+C to stop"
-    echo ""
-    
-    python3 -m mkdocs serve "$@"
-}
-
-# Clean build artifacts
 clean_docs() {
-    echo -e "${BLUE}Cleaning build artifacts...${NC}"
-    
-    if [ -d "site" ]; then
-        rm -rf site
-        echo -e "${GREEN}✓ Cleaned: site/${NC}"
+    if [ -d "${OUTPUT_DIR}" ]; then
+        rm -rf "${OUTPUT_DIR}"
+        echo "Removed ${OUTPUT_DIR}"
     else
-        echo -e "  Nothing to clean"
+        echo "Nothing to clean."
     fi
 }
 
-# Main
-main() {
-    local command="${1:-serve}"
-    
-    case "$command" in
-        serve)
-            shift || true
-            serve_docs "$@"
-            ;;
-        build)
-            build_docs
-            ;;
-        clean)
-            clean_docs
-            ;;
-        install)
-            install_deps
-            ;;
-        help|--help|-h)
-            show_help
-            ;;
-        *)
-            echo -e "${RED}Unknown command: $command${NC}"
-            echo ""
-            show_help
-            exit 1
-            ;;
-    esac
-}
+command="${1:-help}"
 
-main "$@"
+case "${command}" in
+    help|--help|-h)
+        show_help
+        ;;
+    preview)
+        preview_docs
+        ;;
+    build)
+        build_docs
+        ;;
+    clean)
+        clean_docs
+        ;;
+    *)
+        echo "Unknown command: ${command}" >&2
+        echo "Run ./docs.sh help for usage." >&2
+        exit 1
+        ;;
+esac

@@ -1,7 +1,7 @@
 # Experimental Robotics Course
 
 [![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![MkDocs](https://img.shields.io/badge/Docs-MkDocs%20Material-0D47A1?logo=materialfordesign&logoColor=white)](https://squidfunk.github.io/mkdocs-material/)
+[![GitBook](https://img.shields.io/static/v1?message=Documented%20on%20GitBook&logo=gitbook&logoColor=ffffff&label=%20&labelColor=5c5c5c&color=3F89A1)](https://ricelab.gitbook.io/experimental-robotics-docs)
 [![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 [![ROS2 Jazzy](https://img.shields.io/badge/ROS2-Jazzy-purple?logo=ros&logoColor=white)](https://docs.ros.org/en/jazzy/)
 [![ROS2 Humble](https://img.shields.io/badge/ROS2-Humble-blue?logo=ros&logoColor=white)](https://docs.ros.org/en/humble/)
@@ -48,17 +48,9 @@ docker compose exec sim-gazebo-rosbotxl bash
 
 ## 📚 Documentation
 
-For detailed documentation, tutorials, and assignments, build the local documentation:
+For detailed setup guides, troubleshooting tips, and curated resources, visit our **GitBook page**:
 
-```bash
-# Install dependencies
-./docs.sh install
-
-# Serve locally (hot-reload)
-./docs.sh serve
-
-# Access at http://localhost:8000
-```
+📝 **[Experimental Robotics Course Documentation](https://ricelab.gitbook.io/experimental-robotics-docs)**
 
 ## Available Commands
 
