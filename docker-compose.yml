@@ -1,10 +1,67 @@
+# =============================================================================
+# Reusable Configuration Anchors
+# =============================================================================
+
+x-x11-base: &x11-base
+  environment:
+    DISPLAY: ${DISPLAY:-:0}
+    QT_X11_NO_MITSHM: "1"
+  volumes:
+    - /tmp/.X11-unix:/tmp/.X11-unix:rw
+  network_mode: host
+  ipc: host
+
+x-gpu-nvidia: &gpu-nvidia
+  environment:
+    NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES:-all}
+    NVIDIA_DRIVER_CAPABILITIES: ${NVIDIA_DRIVER_CAPABILITIES:-graphics,utility,compute}
+  devices:
+    - /dev/dri:/dev/dri
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: 1
+            capabilities: [gpu]
+
+x-slam-base: &slam-base
+  image: husarion/slam-toolbox:humble
+  <<: *x11-base
+  command: >
+    ros2 launch slam_toolbox online_sync_launch.py
+      use_sim_time:=True
+
+x-nav2-base: &nav2-base
+  image: husarion/navigation2:humble
+  <<: *x11-base
+  command: >
+    ros2 launch nav2_bringup navigation_launch.py
+      use_sim_time:=True
+
+x-rviz2-base: &rviz2-base
+  image: husarion/rviz2:humble
+  <<: [*x11-base, *gpu-nvidia]
+  command: ros2 run rviz2 rviz2
+
+# =============================================================================
+# Services
+# =============================================================================
+
 services:
+
+  # ---------------------------------------------------------------------------
+  # Development Containers (Student Workspaces)
+  # ---------------------------------------------------------------------------
+
   ros2_humble:
     build:
       context: ./ros2_humble
-    container_name: experimental_robotics_humble
-    hostname: ros2-humble
-    networks: [rosnet]
+    container_name: dev_humble
+    hostname: dev-humble
+    profiles: [dev-humble]
+    network_mode: host
+    ipc: host
     environment:
       RMW_IMPLEMENTATION: rmw_fastrtps_cpp
       ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
@@ -13,18 +70,13 @@ services:
       NVIDIA_VISIBLE_DEVICES: all
       NVIDIA_DRIVER_CAPABILITIES: all
       ROS_DISTRO: humble
-      # Graphics/Gazebo environment (configured dynamically in container)
       XDG_RUNTIME_DIR: /tmp/runtime-dir
     volumes:
-      # X11 forwarding for GUI applications
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      # ROS2 workspace mounting
       - ./ros2_humble_ws:/root/ros2_ws:rw
-      # Config files
       - ./config:/root/config:ro
-      # Scripts
       - ./scripts:/root/scripts:ro
-    shm_size: "2gb"
+    shm_size: 2gb
     devices:
       - /dev/dri:/dev/dri
     deploy:
@@ -35,8 +87,6 @@ services:
               count: 1
               capabilities: [gpu]
     privileged: true
-    restart: unless-stopped
-    profiles: ["humble", "all"]
     stdin_open: true
     tty: true
     command: bash -c "source /opt/ros/humble/setup.bash && /root/scripts/entrypoint_humble.sh && tail -f /dev/null"
@@ -44,9 +94,11 @@ services:
   ros2_jazzy:
     build:
       context: ./ros2_jazzy
-    container_name: experimental_robotics_jazzy
-    hostname: ros2-jazzy
-    networks: [rosnet]
+    container_name: dev_jazzy
+    hostname: dev-jazzy
+    profiles: [dev-jazzy]
+    network_mode: host
+    ipc: host
     environment:
       RMW_IMPLEMENTATION: rmw_fastrtps_cpp
       ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
@@ -55,18 +107,13 @@ services:
       NVIDIA_VISIBLE_DEVICES: all
       NVIDIA_DRIVER_CAPABILITIES: all
       ROS_DISTRO: jazzy
-      # Graphics/Gazebo environment (configured dynamically in container)
       XDG_RUNTIME_DIR: /tmp/runtime-dir
     volumes:
-      # X11 forwarding for GUI applications
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      # ROS2 workspace mounting
       - ./ros2_jazzy_ws:/root/ros2_ws:rw
-      # Config files
       - ./config:/root/config:ro
-      # Scripts
       - ./scripts:/root/scripts:ro
-    shm_size: "2gb"
+    shm_size: 2gb
     devices:
       - /dev/dri:/dev/dri
     deploy:
@@ -77,16 +124,288 @@ services:
               count: 1
               capabilities: [gpu]
     privileged: true
-    restart: unless-stopped
-    profiles: ["jazzy", "all"]
     stdin_open: true
     tty: true
     command: bash -c "source /opt/ros/jazzy/setup.bash && /root/scripts/entrypoint_jazzy.sh && tail -f /dev/null"
 
-networks:
-  rosnet:
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.20.0.0/16
+  # ---------------------------------------------------------------------------
+  # GAZEBO Simulations
+  # ---------------------------------------------------------------------------
+
+  # ROSbot 2R/2 PRO + Gazebo (includes built-in RViz2)
+  sim-gazebo-rosbot2r:
+    image: husarion/rosbot-gazebo:humble
+    container_name: sim-gazebo-rosbot2r
+    profiles: [gazebo-rosbot2r, gazebo-rosbot2r-slam, gazebo-rosbot2r-nav]
+    <<: [*x11-base, *gpu-nvidia]
+    environment:
+      DISPLAY: ${DISPLAY:-:0}
+      QT_X11_NO_MITSHM: "1"
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: graphics,utility,compute
+      QT_QPA_PLATFORM: xcb
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    command: >
+      ros2 launch rosbot_gazebo simulation.launch.py
+        robot_model:=rosbot
+        mecanum:=${MECANUM:-False}
+
+  # Optional SLAM (use profile: gazebo-rosbot2r-slam)
+  slam-gazebo-rosbot2r:
+    <<: *slam-base
+    container_name: slam-gazebo-rosbot2r
+    profiles: [gazebo-rosbot2r-slam]
+    restart: unless-stopped
+    depends_on:
+      sim-gazebo-rosbot2r:
+        condition: service_started
+
+  # Optional Nav2 (use profile: gazebo-rosbot2r-nav, requires SLAM)
+  nav2-gazebo-rosbot2r:
+    <<: *nav2-base
+    container_name: nav2-gazebo-rosbot2r
+    profiles: [gazebo-rosbot2r-nav]
+    restart: unless-stopped
+    depends_on:
+      sim-gazebo-rosbot2r:
+        condition: service_started
+      slam-gazebo-rosbot2r:
+        condition: service_started
+
+  # ROSbot XL + Gazebo
+  sim-gazebo-rosbotxl:
+    image: husarion/rosbot-xl-gazebo:humble
+    container_name: sim-gazebo-rosbotxl
+    profiles: [gazebo-rosbotxl, gazebo-rosbotxl-slam, gazebo-rosbotxl-nav]
+    <<: [*x11-base, *gpu-nvidia]
+    environment:
+      DISPLAY: ${DISPLAY:-:0}
+      QT_X11_NO_MITSHM: "1"
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: graphics,utility,compute
+      QT_QPA_PLATFORM: xcb
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    command: >
+      ros2 launch rosbot_xl_gazebo simulation.launch.py
+        robot_model:=rosbot_xl
+        mecanum:=${MECANUM:-True}
+        camera_model:=intel_realsense_d435
+
+  # Optional SLAM (use profile: gazebo-rosbotxl-slam)
+  slam-gazebo-rosbotxl:
+    <<: *slam-base
+    container_name: slam-gazebo-rosbotxl
+    profiles: [gazebo-rosbotxl-slam]
+    restart: unless-stopped
+    depends_on:
+      sim-gazebo-rosbotxl:
+        condition: service_started
+
+  # Optional Nav2 (use profile: gazebo-rosbotxl-nav, requires SLAM)
+  nav2-gazebo-rosbotxl:
+    <<: *nav2-base
+    container_name: nav2-gazebo-rosbotxl
+    profiles: [gazebo-rosbotxl-nav]
+    restart: unless-stopped
+    depends_on:
+      sim-gazebo-rosbotxl:
+        condition: service_started
+      slam-gazebo-rosbotxl:
+        condition: service_started
+
+  # Optional RViz2 for rosbotxl
+  rviz2-gazebo-rosbotxl:
+    <<: *rviz2-base
+    container_name: rviz2-gazebo-rosbotxl
+    profiles: [gazebo-rosbotxl, gazebo-rosbotxl-slam, gazebo-rosbotxl-nav]
+
+  # Panther + Gazebo (includes built-in RViz2)
+  sim-gazebo-panther:
+    image: husarion/panther-gazebo:humble
+    container_name: sim-gazebo-panther
+    profiles: [gazebo-panther, gazebo-panther-slam, gazebo-panther-nav]
+    <<: [*x11-base, *gpu-nvidia]
+    environment:
+      DISPLAY: ${DISPLAY:-:0}
+      QT_X11_NO_MITSHM: "1"
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: graphics,utility,compute
+      QT_QPA_PLATFORM: xcb
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    command: ros2 launch panther_gazebo panther_world.launch.py
+
+  # Optional SLAM (use profile: gazebo-panther-slam)
+  slam-gazebo-panther:
+    <<: *slam-base
+    container_name: slam-gazebo-panther
+    profiles: [gazebo-panther-slam]
+    restart: unless-stopped
+    depends_on:
+      sim-gazebo-panther:
+        condition: service_started
+
+  # Optional Nav2 (use profile: gazebo-panther-nav, requires SLAM)
+  nav2-gazebo-panther:
+    <<: *nav2-base
+    container_name: nav2-gazebo-panther
+    profiles: [gazebo-panther-nav]
+    restart: unless-stopped
+    depends_on:
+      sim-gazebo-panther:
+        condition: service_started
+      slam-gazebo-panther:
+        condition: service_started
+
+  # ---------------------------------------------------------------------------
+  # WEBOTS Simulations
+  # ---------------------------------------------------------------------------
+
+  # ROSbot 2R + Webots
+  sim-webots-rosbot2r:
+    image: husarion/webots:humble
+    container_name: sim-webots-rosbot2r
+    profiles: [webots-rosbot2r, webots-rosbot2r-slam, webots-rosbot2r-nav]
+    <<: [*x11-base, *gpu-nvidia]
+    environment:
+      DISPLAY: ${DISPLAY:-:0}
+      QT_X11_NO_MITSHM: "1"
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: graphics,utility,compute
+      QT_QPA_PLATFORM: xcb
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    command: ros2 launch webots_ros2_husarion robot_launch.py robot_name:=rosbot
+
+  # Optional SLAM (use profile: webots-rosbot2r-slam)
+  slam-webots-rosbot2r:
+    <<: *slam-base
+    container_name: slam-webots-rosbot2r
+    profiles: [webots-rosbot2r-slam]
+    restart: unless-stopped
+    depends_on:
+      sim-webots-rosbot2r:
+        condition: service_started
+
+  # Optional Nav2 (use profile: webots-rosbot2r-nav, requires SLAM)
+  nav2-webots-rosbot2r:
+    <<: *nav2-base
+    container_name: nav2-webots-rosbot2r
+    profiles: [webots-rosbot2r-nav]
+    restart: unless-stopped
+    depends_on:
+      sim-webots-rosbot2r:
+        condition: service_started
+      slam-webots-rosbot2r:
+        condition: service_started
+
+  rviz2-webots-rosbot2r:
+    <<: *rviz2-base
+    container_name: rviz2-webots-rosbot2r
+    profiles: [webots-rosbot2r, webots-rosbot2r-slam, webots-rosbot2r-nav]
+
+  # ROSbot XL + Webots
+  sim-webots-rosbotxl:
+    image: husarion/webots:humble
+    container_name: sim-webots-rosbotxl
+    profiles: [webots-rosbotxl, webots-rosbotxl-slam, webots-rosbotxl-nav]
+    <<: [*x11-base, *gpu-nvidia]
+    environment:
+      DISPLAY: ${DISPLAY:-:0}
+      QT_X11_NO_MITSHM: "1"
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: graphics,utility,compute
+      QT_QPA_PLATFORM: xcb
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    command: ros2 launch webots_ros2_husarion rosbot_xl_launch.py
+
+  # Optional SLAM (use profile: webots-rosbotxl-slam)
+  slam-webots-rosbotxl:
+    <<: *slam-base
+    container_name: slam-webots-rosbotxl
+    profiles: [webots-rosbotxl-slam]
+    restart: unless-stopped
+    depends_on:
+      sim-webots-rosbotxl:
+        condition: service_started
+
+  # Optional Nav2 (use profile: webots-rosbotxl-nav, requires SLAM)
+  nav2-webots-rosbotxl:
+    <<: *nav2-base
+    container_name: nav2-webots-rosbotxl
+    profiles: [webots-rosbotxl-nav]
+    restart: unless-stopped
+    depends_on:
+      sim-webots-rosbotxl:
+        condition: service_started
+      slam-webots-rosbotxl:
+        condition: service_started
+
+  rviz2-webots-rosbotxl:
+    <<: *rviz2-base
+    container_name: rviz2-webots-rosbotxl
+    profiles: [webots-rosbotxl, webots-rosbotxl-slam, webots-rosbotxl-nav]
+
+  # ---------------------------------------------------------------------------
+  # O3DE Simulation
+  # ---------------------------------------------------------------------------
+
+  # ROSbot XL + O3DE
+  sim-o3de-rosbotxl:
+    build:
+      context: ./o3de
+    image: experimental_robotics/o3de:local
+    container_name: sim-o3de-rosbotxl
+    profiles: [o3de-rosbotxl, o3de-rosbotxl-slam, o3de-rosbotxl-nav]
+    <<: [*x11-base, *gpu-nvidia]
+    environment:
+      DISPLAY: ${DISPLAY:-:0}
+      QT_X11_NO_MITSHM: "1"
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: graphics,utility,compute
+      VGL_DISPLAY: ${DISPLAY:-:0}
+      VNC_PORT: ${O3DE_VNC_PORT:-5901}
+      VNC_DISPLAY: ${O3DE_VNC_DISPLAY:-:1}
+      VNC_RESOLUTION: ${O3DE_VNC_RESOLUTION:-1920x1080}
+      VNC_DEPTH: ${O3DE_VNC_DEPTH:-24}
+      O3DE_EXECUTABLE: ${O3DE_EXECUTABLE:-Editor}
+      O3DE_ARGS: ${O3DE_ARGS:-}
+      O3DE_ASSET_PROCESSOR: ${O3DE_ASSET_PROCESSOR:-1}
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+
+  # Optional SLAM (use profile: o3de-rosbotxl-slam)
+  slam-o3de-rosbotxl:
+    <<: *slam-base
+    container_name: slam-o3de-rosbotxl
+    profiles: [o3de-rosbotxl-slam]
+    restart: unless-stopped
+    depends_on:
+      sim-o3de-rosbotxl:
+        condition: service_started
+
+  # Optional Nav2 (use profile: o3de-rosbotxl-nav, requires SLAM)
+  nav2-o3de-rosbotxl:
+    <<: *nav2-base
+    container_name: nav2-o3de-rosbotxl
+    profiles: [o3de-rosbotxl-nav]
+    restart: unless-stopped
+    depends_on:
+      sim-o3de-rosbotxl:
+        condition: service_started
+      slam-o3de-rosbotxl:
+        condition: service_started
+
+  rviz2-o3de-rosbotxl:
+    <<: *rviz2-base
+    container_name: rviz2-o3de-rosbotxl
+    profiles: [o3de-rosbotxl, o3de-rosbotxl-slam, o3de-rosbotxl-nav]
