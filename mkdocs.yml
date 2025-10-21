@@ -1,0 +1,95 @@
+site_name: Experimental Robotics
+site_description: Course documentation for Experimental Robotics at University of Genoa
+site_author: RICELab, University of Genoa
+site_url: https://RICE-unige.github.io/experimental_robotics/
+repo_url: https://github.com/RICE-unige/experimental_robotics
+repo_name: experimental_robotics
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  logo: assets/ricelab_logo.jpg
+  favicon: assets/ricelab_logo.jpg
+  palette:
+    - scheme: light
+      primary: purple
+      accent: amber
+      toggle:
+        icon: material/lightbulb-outline
+        name: Switch to dark mode
+    - scheme: dark
+      primary: purple
+      accent: amber
+      toggle:
+        icon: material/lightbulb
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.instant.loading
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.expand
+    - navigation.top
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - content.code.select
+    - content.tabs.link
+    - content.tooltips
+
+plugins:
+  - search
+  - include-markdown
+
+markdown_extensions:
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      use_pygments: true
+      anchor_linenums: true
+      line_spans: __span
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      check_paths: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.arithmatex:
+      generic: true
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      toc_depth: 3
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Setup: getting-started/setup.md
+  - Course Content:
+      - ROS 2 Basics: course/ros2-basics.md
+      - Simulation: course/simulation.md
+      - Labs: course/labs.md
+      - Assignments: course/assignments.md
+      - Final Project: course/final-project.md
+  - Reference:
+      - Resources: reference/resources.md
+      - FAQ: reference/faq.md
