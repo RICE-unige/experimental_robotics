@@ -1,0 +1,3 @@
+# Minimize build context; Dockerfiles copy nothing
+*
+!Dockerfile

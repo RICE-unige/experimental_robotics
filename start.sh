@@ -21,6 +21,7 @@ xhost +local:docker >/dev/null 2>&1 || echo "Warning: Could not enable X11 forwa
 # Parse command line arguments
 PROFILE="jazzy"  # Default profile
 BUILD_FLAG=""
+CLEAN_FLAG=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -32,12 +33,17 @@ while [[ $# -gt 0 ]]; do
             BUILD_FLAG="--build"
             shift
             ;;
+        --clean)
+            CLEAN_FLAG="1"
+            shift
+            ;;
         --help|-h)
             echo "Usage: $0 [options]"
             echo ""
             echo "Options:"
             echo "  --profile PROFILE   Choose environment: jazzy (default), humble, all"
             echo "  --build             Force rebuild of containers"
+            echo "  --clean             Stop containers, remove volumes and local images for this project"
             echo "  --help, -h          Show this help message"
             echo ""
             echo "Examples:"
@@ -68,12 +74,20 @@ case $PROFILE in
         ;;
 esac
 
+# Clean mode
+if [ -n "$CLEAN_FLAG" ]; then
+    echo "Cleaning environment (containers, volumes, local images for this compose project)..."
+    docker compose down -v --rmi local --remove-orphans || true
+    exit 0
+fi
+
 # Start the environment
 echo "Starting $PROFILE environment..."
 echo "Profile: $PROFILE"
 
 if [ "$PROFILE" = "all" ]; then
     echo "Starting both ROS2 Humble and Jazzy containers..."
+    echo "Warning: running both containers uses significant CPU/RAM/GPU; prefer a single profile on low-memory systems."
     docker compose --profile all up -d $BUILD_FLAG
     echo ""
     echo "Both environments started successfully!"
