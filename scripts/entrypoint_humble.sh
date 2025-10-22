@@ -12,7 +12,7 @@ fi
 
 # Set up environment variables
 export RMW_IMPLEMENTATION=${RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
-export ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-42}
+export ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-43}
 export ROS_DISTRO=humble
 
 # Graphics/Gazebo environment - Auto-detect GPU or use software rendering
