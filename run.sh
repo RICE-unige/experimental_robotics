@@ -79,25 +79,23 @@ show_help() {
     echo "      Start a robot simulation with optional SLAM/Nav2 autonomy stack."
     echo ""
     echo "      Arguments:"
-    echo "        <robot>      Robot platform: rosbot2r, rosbotxl, panther"
+    echo "        <robot>      Robot platform: rosbot2r, rosbotxl, rosbotxl-manip, panther"
     echo "        <simulator>  Simulator engine: gazebo, webots, o3de"
     echo ""
     echo "      Options:"
-    echo "        --slam            Enable SLAM Toolbox for mapping"
-    echo "        --nav             Enable Nav2 navigation (requires --slam)"
     echo "        --dev <distro>    Also start dev container (humble or jazzy)"
     echo "        --build           Rebuild containers before starting"
     echo ""
     echo "      Examples:"
     echo "        $0 sim rosbotxl gazebo                    # Basic simulation with built-in RViz2"
-    echo "        $0 sim rosbot2r gazebo --slam             # Simulation + SLAM mapping"
-    echo "        $0 sim rosbotxl gazebo --slam --nav       # Full autonomy stack"
+    echo "        $0 sim rosbotxl-manip gazebo             # XL with manipulator (Gazebo + MoveIt2)"
     echo "        $0 sim rosbot2r gazebo --dev humble       # Simulation + dev container"
-    echo "        $0 sim rosbotxl gazebo --slam --dev jazzy # Sim + SLAM + dev container"
+    echo "        $0 sim rosbotxl gazebo --dev jazzy        # Sim + dev container"
     echo ""
     echo "      Robot/Simulator compatibility:"
     echo "        rosbot2r:  gazebo, webots"
-    echo "        rosbotxl:  gazebo, webots, o3de"
+    echo "        rosbotxl:        gazebo, webots, o3de"
+    echo "        rosbotxl-manip:  gazebo only"
     echo "        panther:   gazebo only"
     echo ""
     echo "      After starting:"
@@ -158,7 +156,7 @@ show_help() {
     echo "  • View logs with: docker compose logs -f"
     echo "  • All containers use host networking for easy ROS2 communication"
     echo ""
-    echo "For more help: https://ricelab.gitbook.io/experimental-robotics-docs"
+    echo "For more help: Check the README.md or create an issue on GitHub"
     echo ""
 }
 
@@ -222,8 +220,6 @@ cmd_sim() {
     shift 2 || true
     
     local DEV_DISTRO=""
-    local USE_SLAM=""
-    local USE_NAV=""
     local BUILD_FLAG=""
     
     # Parse options
@@ -232,14 +228,6 @@ cmd_sim() {
             --dev)
                 DEV_DISTRO="$2"
                 shift 2
-                ;;
-            --slam)
-                USE_SLAM="yes"
-                shift
-                ;;
-            --nav)
-                USE_NAV="yes"
-                shift
                 ;;
             --build)
                 BUILD_FLAG="--build"
@@ -259,18 +247,12 @@ cmd_sim() {
         exit 1
     fi
     
-    # Check dependencies
-    if [ "$USE_NAV" = "yes" ] && [ "$USE_SLAM" != "yes" ]; then
-        print_error "--nav requires --slam to be enabled"
-        echo "Hint: Use --slam --nav together"
-        exit 1
-    fi
     
     # Validate robot/simulator combo
     local BASE_PROFILE="${SIMULATOR}-${ROBOT}"
     
     case "$BASE_PROFILE" in
-        gazebo-rosbot2r|gazebo-rosbotxl|gazebo-panther)
+        gazebo-rosbot2r|gazebo-rosbotxl|gazebo-rosbotxl-manip|gazebo-panther)
             ;;
         webots-rosbot2r|webots-rosbotxl)
             ;;
@@ -291,20 +273,15 @@ cmd_sim() {
             ;;
     esac
     
-    # Build profile list - use multiple profiles when needed
-    local PROFILE_FLAGS="--profile $BASE_PROFILE"
-    if [ "$USE_SLAM" = "yes" ]; then
-        PROFILE_FLAGS="$PROFILE_FLAGS --profile ${BASE_PROFILE}-slam"
-    fi
-    if [ "$USE_NAV" = "yes" ]; then
-        PROFILE_FLAGS="$PROFILE_FLAGS --profile ${BASE_PROFILE}-nav"
-    fi
+
+    # Build profile list (base only)
+    local PROFILE_FLAGS=(--profile "$BASE_PROFILE")
     
     # Add dev profile if requested
     if [ -n "$DEV_DISTRO" ]; then
         case "$DEV_DISTRO" in
             humble|jazzy)
-                PROFILE_FLAGS="$PROFILE_FLAGS --profile dev-$DEV_DISTRO"
+                PROFILE_FLAGS+=(--profile "dev-$DEV_DISTRO")
                 ;;
             *)
                 print_error "Invalid dev distro: $DEV_DISTRO"
@@ -321,15 +298,13 @@ cmd_sim() {
     echo "  Robot:     $ROBOT"
     echo "  Simulator: $SIMULATOR"
     [ -n "$DEV_DISTRO" ] && echo "  Dev:       $DEV_DISTRO" || echo "  Dev:       No"
-    [ "$USE_SLAM" = "yes" ] && echo "  SLAM:      Enabled" || echo "  SLAM:      Disabled"
-    [ "$USE_NAV" = "yes" ] && echo "  Nav2:      Enabled" || echo "  Nav2:      Disabled"
     echo ""
     
     check_docker
     enable_x11
     
     print_info "Launching simulation..."
-    docker compose $PROFILE_FLAGS up -d $BUILD_FLAG
+    docker compose "${PROFILE_FLAGS[@]}" up -d ${BUILD_FLAG}
     
     echo ""
     print_success "✓ Simulation launched!"
@@ -369,27 +344,17 @@ cmd_stop() {
             docker compose --profile dev-humble --profile dev-jazzy down --remove-orphans 2>/dev/null
             ;;
         sim)
-            docker compose --profile gazebo-rosbot2r --profile gazebo-rosbotxl --profile gazebo-panther \
+            docker compose --profile gazebo-rosbot2r --profile gazebo-rosbotxl --profile gazebo-rosbotxl-manip --profile gazebo-panther \
                            --profile webots-rosbot2r --profile webots-rosbotxl \
                            --profile o3de-rosbotxl \
-                           --profile gazebo-rosbot2r-slam --profile gazebo-rosbotxl-slam --profile gazebo-panther-slam \
-                           --profile gazebo-rosbot2r-nav --profile gazebo-rosbotxl-nav --profile gazebo-panther-nav \
-                           --profile webots-rosbot2r-slam --profile webots-rosbotxl-slam \
-                           --profile webots-rosbot2r-nav --profile webots-rosbotxl-nav \
-                           --profile o3de-rosbotxl-slam --profile o3de-rosbotxl-nav \
                            down --remove-orphans 2>/dev/null
             ;;
         all)
             # Stop all profiles explicitly
             docker compose --profile dev-humble --profile dev-jazzy \
-                           --profile gazebo-rosbot2r --profile gazebo-rosbotxl --profile gazebo-panther \
+                           --profile gazebo-rosbot2r --profile gazebo-rosbotxl --profile gazebo-rosbotxl-manip --profile gazebo-panther \
                            --profile webots-rosbot2r --profile webots-rosbotxl \
                            --profile o3de-rosbotxl \
-                           --profile gazebo-rosbot2r-slam --profile gazebo-rosbotxl-slam --profile gazebo-panther-slam \
-                           --profile gazebo-rosbot2r-nav --profile gazebo-rosbotxl-nav --profile gazebo-panther-nav \
-                           --profile webots-rosbot2r-slam --profile webots-rosbotxl-slam \
-                           --profile webots-rosbot2r-nav --profile webots-rosbotxl-nav \
-                           --profile o3de-rosbotxl-slam --profile o3de-rosbotxl-nav \
                            down --remove-orphans 2>/dev/null
             ;;
         *)
