@@ -6,6 +6,7 @@ x-x11-base: &x11-base
   environment:
     DISPLAY: ${DISPLAY:-:0}
     QT_X11_NO_MITSHM: "1"
+    ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
   volumes:
     - /tmp/.X11-unix:/tmp/.X11-unix:rw
   network_mode: host
@@ -25,19 +26,7 @@ x-gpu-nvidia: &gpu-nvidia
             count: 1
             capabilities: [gpu]
 
-x-slam-base: &slam-base
-  image: husarion/slam-toolbox:humble
-  <<: *x11-base
-  command: >
-    ros2 launch slam_toolbox online_sync_launch.py
-      use_sim_time:=True
 
-x-nav2-base: &nav2-base
-  image: husarion/navigation2:humble
-  <<: *x11-base
-  command: >
-    ros2 launch nav2_bringup navigation_launch.py
-      use_sim_time:=True
 
 x-rviz2-base: &rviz2-base
   image: husarion/rviz2:humble
@@ -136,9 +125,10 @@ services:
   sim-gazebo-rosbot2r:
     image: husarion/rosbot-gazebo:humble
     container_name: sim-gazebo-rosbot2r
-    profiles: [gazebo-rosbot2r, gazebo-rosbot2r-slam, gazebo-rosbot2r-nav]
+    profiles: [gazebo-rosbot2r]
     <<: [*x11-base, *gpu-nvidia]
     environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
       DISPLAY: ${DISPLAY:-:0}
       QT_X11_NO_MITSHM: "1"
       NVIDIA_VISIBLE_DEVICES: all
@@ -152,35 +142,16 @@ services:
         robot_model:=rosbot
         mecanum:=${MECANUM:-False}
 
-  # Optional SLAM (use profile: gazebo-rosbot2r-slam)
-  slam-gazebo-rosbot2r:
-    <<: *slam-base
-    container_name: slam-gazebo-rosbot2r
-    profiles: [gazebo-rosbot2r-slam]
-    restart: unless-stopped
-    depends_on:
-      sim-gazebo-rosbot2r:
-        condition: service_started
 
-  # Optional Nav2 (use profile: gazebo-rosbot2r-nav, requires SLAM)
-  nav2-gazebo-rosbot2r:
-    <<: *nav2-base
-    container_name: nav2-gazebo-rosbot2r
-    profiles: [gazebo-rosbot2r-nav]
-    restart: unless-stopped
-    depends_on:
-      sim-gazebo-rosbot2r:
-        condition: service_started
-      slam-gazebo-rosbot2r:
-        condition: service_started
 
   # ROSbot XL + Gazebo
   sim-gazebo-rosbotxl:
     image: husarion/rosbot-xl-gazebo:humble
     container_name: sim-gazebo-rosbotxl
-    profiles: [gazebo-rosbotxl, gazebo-rosbotxl-slam, gazebo-rosbotxl-nav]
+    profiles: [gazebo-rosbotxl]
     <<: [*x11-base, *gpu-nvidia]
     environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
       DISPLAY: ${DISPLAY:-:0}
       QT_X11_NO_MITSHM: "1"
       NVIDIA_VISIBLE_DEVICES: all
@@ -195,72 +166,69 @@ services:
         mecanum:=${MECANUM:-True}
         camera_model:=intel_realsense_d435
 
-  # Optional SLAM (use profile: gazebo-rosbotxl-slam)
-  slam-gazebo-rosbotxl:
-    <<: *slam-base
-    container_name: slam-gazebo-rosbotxl
-    profiles: [gazebo-rosbotxl-slam]
-    restart: unless-stopped
-    depends_on:
-      sim-gazebo-rosbotxl:
-        condition: service_started
 
-  # Optional Nav2 (use profile: gazebo-rosbotxl-nav, requires SLAM)
-  nav2-gazebo-rosbotxl:
-    <<: *nav2-base
-    container_name: nav2-gazebo-rosbotxl
-    profiles: [gazebo-rosbotxl-nav]
-    restart: unless-stopped
-    depends_on:
-      sim-gazebo-rosbotxl:
-        condition: service_started
-      slam-gazebo-rosbotxl:
-        condition: service_started
 
   # Optional RViz2 for rosbotxl
   rviz2-gazebo-rosbotxl:
     <<: *rviz2-base
     container_name: rviz2-gazebo-rosbotxl
-    profiles: [gazebo-rosbotxl, gazebo-rosbotxl-slam, gazebo-rosbotxl-nav]
+    profiles: [gazebo-rosbotxl]
 
   # Panther + Gazebo (includes built-in RViz2)
   sim-gazebo-panther:
     image: husarion/panther-gazebo:humble
     container_name: sim-gazebo-panther
-    profiles: [gazebo-panther, gazebo-panther-slam, gazebo-panther-nav]
+    profiles: [gazebo-panther]
     <<: [*x11-base, *gpu-nvidia]
     environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
       DISPLAY: ${DISPLAY:-:0}
       QT_X11_NO_MITSHM: "1"
       NVIDIA_VISIBLE_DEVICES: all
       NVIDIA_DRIVER_CAPABILITIES: graphics,utility,compute
       QT_QPA_PLATFORM: xcb
+    volumes:
+      - ./config:/config:ro
     stdin_open: true
     tty: true
     restart: unless-stopped
-    command: ros2 launch panther_gazebo panther_world.launch.py
+    command: ["ros2", "launch", "panther_gazebo", "simulation.launch.py", "components_config_path:=/config/panther_components.yaml"]
 
-  # Optional SLAM (use profile: gazebo-panther-slam)
-  slam-gazebo-panther:
-    <<: *slam-base
-    container_name: slam-gazebo-panther
-    profiles: [gazebo-panther-slam]
+  # ROSbot XL + Manipulator (Gazebo + MoveIt2)
+  sim-gazebo-rosbotxl-manip:
+    image: husarion/rosbot-xl-manipulation-gazebo:humble
+    container_name: sim-gazebo-rosbotxl-manip
+    profiles: [gazebo-rosbotxl-manip]
+    <<: [*x11-base, *gpu-nvidia]
+    environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
+      DISPLAY: ${DISPLAY:-:0}
+      QT_X11_NO_MITSHM: "1"
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: graphics,utility,compute
+      MECANUM: ${MECANUM:-True}
+      ANTENNA_ROTATION_ANGLE: ${ANTENNA_ROTATION_ANGLE:--1.57}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ./extra/rosbot-xl-manipulation/config/rosbot_xl.rviz:/ros2_ws/install/rosbot_xl_manipulation_moveit/share/rosbot_xl_manipulation_moveit/config/moveit.rviz
+    stdin_open: true
+    tty: true
     restart: unless-stopped
-    depends_on:
-      sim-gazebo-panther:
-        condition: service_started
+    command: ["ros2","launch","rosbot_xl_manipulation_gazebo","simulation.launch.py","mecanum:=${MECANUM:-True}","antenna_rotation_angle:=${ANTENNA_ROTATION_ANGLE:--1.57}"]
 
-  # Optional Nav2 (use profile: gazebo-panther-nav, requires SLAM)
-  nav2-gazebo-panther:
-    <<: *nav2-base
-    container_name: nav2-gazebo-panther
-    profiles: [gazebo-panther-nav]
-    restart: unless-stopped
-    depends_on:
-      sim-gazebo-panther:
-        condition: service_started
-      slam-gazebo-panther:
-        condition: service_started
+  joy2twist-rosbotxl-manip:
+    image: husarion/joy2twist:humble-1.0.0-20230204-stable
+    container_name: joy2twist-rosbotxl-manip
+    profiles: [gazebo-rosbotxl-manip]
+    <<: *x11-base
+    devices:
+      - /dev/input
+    volumes:
+      - ./extra/rosbot-xl-manipulation/config/joy2twist.yaml:/joy2twist.yaml
+    command: ["ros2","launch","joy2twist","gamepad_controller.launch.py","joy2twist_params_file:=/joy2twist.yaml"]
+
+
+
 
   # ---------------------------------------------------------------------------
   # WEBOTS Simulations
@@ -270,9 +238,10 @@ services:
   sim-webots-rosbot2r:
     image: husarion/webots:humble
     container_name: sim-webots-rosbot2r
-    profiles: [webots-rosbot2r, webots-rosbot2r-slam, webots-rosbot2r-nav]
+    profiles: [webots-rosbot2r]
     <<: [*x11-base, *gpu-nvidia]
     environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
       DISPLAY: ${DISPLAY:-:0}
       QT_X11_NO_MITSHM: "1"
       NVIDIA_VISIBLE_DEVICES: all
@@ -281,42 +250,23 @@ services:
     stdin_open: true
     tty: true
     restart: unless-stopped
-    command: ros2 launch webots_ros2_husarion robot_launch.py robot_name:=rosbot
+    command: ros2 launch webots_ros2_husarion rosbot_launch.py
 
-  # Optional SLAM (use profile: webots-rosbot2r-slam)
-  slam-webots-rosbot2r:
-    <<: *slam-base
-    container_name: slam-webots-rosbot2r
-    profiles: [webots-rosbot2r-slam]
-    restart: unless-stopped
-    depends_on:
-      sim-webots-rosbot2r:
-        condition: service_started
 
-  # Optional Nav2 (use profile: webots-rosbot2r-nav, requires SLAM)
-  nav2-webots-rosbot2r:
-    <<: *nav2-base
-    container_name: nav2-webots-rosbot2r
-    profiles: [webots-rosbot2r-nav]
-    restart: unless-stopped
-    depends_on:
-      sim-webots-rosbot2r:
-        condition: service_started
-      slam-webots-rosbot2r:
-        condition: service_started
 
   rviz2-webots-rosbot2r:
     <<: *rviz2-base
     container_name: rviz2-webots-rosbot2r
-    profiles: [webots-rosbot2r, webots-rosbot2r-slam, webots-rosbot2r-nav]
+    profiles: [webots-rosbot2r]
 
   # ROSbot XL + Webots
   sim-webots-rosbotxl:
     image: husarion/webots:humble
     container_name: sim-webots-rosbotxl
-    profiles: [webots-rosbotxl, webots-rosbotxl-slam, webots-rosbotxl-nav]
+    profiles: [webots-rosbotxl]
     <<: [*x11-base, *gpu-nvidia]
     environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
       DISPLAY: ${DISPLAY:-:0}
       QT_X11_NO_MITSHM: "1"
       NVIDIA_VISIBLE_DEVICES: all
@@ -327,32 +277,12 @@ services:
     restart: unless-stopped
     command: ros2 launch webots_ros2_husarion rosbot_xl_launch.py
 
-  # Optional SLAM (use profile: webots-rosbotxl-slam)
-  slam-webots-rosbotxl:
-    <<: *slam-base
-    container_name: slam-webots-rosbotxl
-    profiles: [webots-rosbotxl-slam]
-    restart: unless-stopped
-    depends_on:
-      sim-webots-rosbotxl:
-        condition: service_started
 
-  # Optional Nav2 (use profile: webots-rosbotxl-nav, requires SLAM)
-  nav2-webots-rosbotxl:
-    <<: *nav2-base
-    container_name: nav2-webots-rosbotxl
-    profiles: [webots-rosbotxl-nav]
-    restart: unless-stopped
-    depends_on:
-      sim-webots-rosbotxl:
-        condition: service_started
-      slam-webots-rosbotxl:
-        condition: service_started
 
   rviz2-webots-rosbotxl:
     <<: *rviz2-base
     container_name: rviz2-webots-rosbotxl
-    profiles: [webots-rosbotxl, webots-rosbotxl-slam, webots-rosbotxl-nav]
+    profiles: [webots-rosbotxl]
 
   # ---------------------------------------------------------------------------
   # O3DE Simulation
@@ -364,9 +294,10 @@ services:
       context: ./o3de
     image: experimental_robotics/o3de:local
     container_name: sim-o3de-rosbotxl
-    profiles: [o3de-rosbotxl, o3de-rosbotxl-slam, o3de-rosbotxl-nav]
+    profiles: [o3de-rosbotxl]
     <<: [*x11-base, *gpu-nvidia]
     environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
       DISPLAY: ${DISPLAY:-:0}
       QT_X11_NO_MITSHM: "1"
       NVIDIA_VISIBLE_DEVICES: all
@@ -383,29 +314,9 @@ services:
     tty: true
     restart: unless-stopped
 
-  # Optional SLAM (use profile: o3de-rosbotxl-slam)
-  slam-o3de-rosbotxl:
-    <<: *slam-base
-    container_name: slam-o3de-rosbotxl
-    profiles: [o3de-rosbotxl-slam]
-    restart: unless-stopped
-    depends_on:
-      sim-o3de-rosbotxl:
-        condition: service_started
 
-  # Optional Nav2 (use profile: o3de-rosbotxl-nav, requires SLAM)
-  nav2-o3de-rosbotxl:
-    <<: *nav2-base
-    container_name: nav2-o3de-rosbotxl
-    profiles: [o3de-rosbotxl-nav]
-    restart: unless-stopped
-    depends_on:
-      sim-o3de-rosbotxl:
-        condition: service_started
-      slam-o3de-rosbotxl:
-        condition: service_started
 
   rviz2-o3de-rosbotxl:
     <<: *rviz2-base
     container_name: rviz2-o3de-rosbotxl
-    profiles: [o3de-rosbotxl, o3de-rosbotxl-slam, o3de-rosbotxl-nav]
+    profiles: [o3de-rosbotxl]
