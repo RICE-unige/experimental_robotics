@@ -1,0 +1,27 @@
+# Components configuration for Panther robot (Gazebo)
+# Enables common sensors: 2D LiDAR, 3D LiDARs, and RGB camera
+
+components:
+  - type: LDR06          # Slamtec RPLIDAR S3 (2D LiDAR)
+    parent_link: cover_link
+    xyz: 0.30 0.00 0.25
+    rpy: 0.0 0.0 0.0
+    device_namespace: front_lidar
+
+  - type: LDR13          # Ouster OS1-32 (3D LiDAR)
+    parent_link: cover_link
+    xyz: 0.00 0.00 0.40
+    rpy: 0.0 0.0 0.0
+    device_namespace: top_ouster
+
+  - type: LDR20          # Velodyne Puck (3D LiDAR)
+    parent_link: cover_link
+    xyz: -0.30 0.00 0.25
+    rpy: 0.0 0.0 3.14159   # face backwards
+    device_namespace: rear_velodyne
+
+  - type: CAM01          # Orbbec Astra RGB camera
+    parent_link: cover_link
+    xyz: 0.30 0.10 0.30
+    rpy: 0.0 -0.10 0.0     # slight downward tilt
+    device_namespace: front_cam
