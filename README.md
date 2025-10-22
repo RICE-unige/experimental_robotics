@@ -170,19 +170,19 @@ experimental_robotics/
   </tr>
   <tr>
     <td><strong>Gazebo</strong></td>
-    <td><img src="imgs/gazebo_logo.jpeg" alt="Gazebo" height="40"/></td>
+    <td align="center"><a href="https://gazebosim.org/docs/latest/getstarted/"><img src="imgs/gazebo_horz_pos.svg" alt="Gazebo" height="40"/></a></td>
     <td>rosbot2r, rosbotxl, rosbotxl-manip, panther</td>
     <td>✅ <strong>Recommended</strong> - Most stable, covered in class</td>
   </tr>
   <tr>
     <td><strong>Webots</strong></td>
-    <td><img src="imgs/webots_logo.png" alt="Webots" height="40"/></td>
+    <td align="center"><a href="https://cyberbotics.com/"><img src="imgs/webots_logo.png" alt="Webots" height="40"/></a></td>
     <td>rosbot2r, rosbotxl</td>
     <td>🧪 Experimental - For exploration and practice</td>
   </tr>
   <tr>
     <td><strong>O3DE</strong></td>
-    <td><img src="imgs/O3DE_Color_Logo.svg.png" alt="O3DE" height="40"/></td>
+    <td align="center"><a href="https://o3de.org/"><img src="imgs/O3DE_Color_Logo.svg.png" alt="O3DE" height="40"/></a></td>
     <td>rosbotxl</td>
     <td>🧪 Advanced - Requires VNC, for testing only</td>
   </tr>
