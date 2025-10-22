@@ -170,8 +170,6 @@ Then use arrow keys to drive.
 2. Click on map where you want the robot to go
 3. Drag arrow to point robot in desired direction
 
-4. Email TA or ask in office hours (don't share code, just ask concepts)
-
 ## Contributing & GitHub
 
 ### Q: How do I submit a bug report?

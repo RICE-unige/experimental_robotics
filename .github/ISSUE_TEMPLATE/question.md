@@ -14,9 +14,9 @@ assignees: ''
 
 ## What I've Tried
 <!-- Have you checked the documentation or tried anything? -->
-- [ ] Checked the [GitBook documentation](https://ricelab.gitbook.io/experimental-robotics-docs)
+- [ ] Read the README documentation
 - [ ] Searched existing issues
-- [ ] Tried troubleshooting steps
+- [ ] Tried troubleshooting steps from the README
 
 ## Additional Information
 <!-- Any other details that might help -->
