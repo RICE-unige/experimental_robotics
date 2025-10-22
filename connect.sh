@@ -53,13 +53,15 @@ show_help() {
     echo ""
     echo "  $0 sim              # Connect to sim container (auto-detect)"
     echo "  $0 sim rosbotxl     # Connect to ROSbot XL simulation"
-    echo "  $0 sim rosbot2r     # Connect to ROSbot 2R simulation"
+    echo "  $0 sim rosbot2r           # Connect to ROSbot 2R simulation"
+    echo "  $0 sim rosbotxl-manip     # Connect to ROSbot XL manip simulation"
     echo ""
     echo "  $0 list             # List all running containers"
     echo ""
     echo "NOTES"
     echo "  • Containers must be running first (use ./run.sh)"
     echo "  • If only one container is running, it's auto-selected"
+    echo "  • If both dev containers are running, you'll be prompted to choose"
     echo "  • Exit the container with 'exit' or Ctrl+D"
     echo ""
 }
@@ -84,11 +86,21 @@ find_dev_container() {
             return 1
         fi
     else
-        # Auto-detect: prefer jazzy, fallback to humble
-        if echo "$CONTAINERS" | grep -q "^ros2_jazzy$"; then
+        # Auto-detect
+        local JAZZY_RUNNING=false
+        local HUMBLE_RUNNING=false
+        
+        echo "$CONTAINERS" | grep -q "^ros2_jazzy$" && JAZZY_RUNNING=true
+        echo "$CONTAINERS" | grep -q "^ros2_humble$" && HUMBLE_RUNNING=true
+        
+        # If both are running, let user choose
+        if $JAZZY_RUNNING && $HUMBLE_RUNNING; then
+            echo "MULTIPLE" # Special marker
+            return 0
+        elif $JAZZY_RUNNING; then
             echo "dev_jazzy"
             return 0
-        elif echo "$CONTAINERS" | grep -q "^ros2_humble$"; then
+        elif $HUMBLE_RUNNING; then
             echo "dev_humble"
             return 0
         else
@@ -161,6 +173,30 @@ cmd_dev() {
         fi
         echo ""
         exit 1
+    fi
+    
+    # Handle case where both containers are running
+    if [ "$CONTAINER" = "MULTIPLE" ]; then
+        print_info "Both dev containers are running. Which one?"
+        echo ""
+        echo "  1) Jazzy (ROS2 Jazzy)"
+        echo "  2) Humble (ROS2 Humble)"
+        echo ""
+        read -r -p "Enter choice (1 or 2): " choice
+        
+        case $choice in
+            1)
+                CONTAINER="dev_jazzy"
+                ;;
+            2)
+                CONTAINER="dev_humble"
+                ;;
+            *)
+                print_error "Invalid choice. Use: $0 dev jazzy  OR  $0 dev humble"
+                exit 1
+                ;;
+        esac
+        echo ""
     fi
     
     print_info "Connecting to $CONTAINER..."
