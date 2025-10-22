@@ -1,0 +1,22 @@
+# Exclude git repository
+.git/
+.gitignore
+
+# Exclude IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Exclude OS files
+.DS_Store
+Thumbs.db
+
+# Exclude documentation
+*.md
+README*
+
+# Exclude temporary files
+*.tmp
+*.log
