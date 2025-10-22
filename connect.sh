@@ -8,7 +8,6 @@ set -e
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
@@ -73,7 +72,8 @@ get_running_containers() {
 # Find dev container
 find_dev_container() {
     local DISTRO="$1"
-    local CONTAINERS=$(get_running_containers)
+    local CONTAINERS
+    CONTAINERS=$(get_running_containers)
     
     if [ -n "$DISTRO" ]; then
         # Specific distro requested
@@ -100,11 +100,13 @@ find_dev_container() {
 # Find sim container
 find_sim_container() {
     local ROBOT="$1"
-    local CONTAINERS=$(docker compose ps --format "{{.Service}}" --filter "status=running" 2>/dev/null)
+    local CONTAINERS
+    CONTAINERS=$(docker compose ps --format "{{.Service}}" --filter "status=running" 2>/dev/null)
     
     if [ -n "$ROBOT" ]; then
         # Specific robot requested
-        local FOUND=$(echo "$CONTAINERS" | grep "^sim-.*-$ROBOT$" | head -1)
+        local FOUND
+        FOUND=$(echo "$CONTAINERS" | grep "^sim-.*-$ROBOT$" | head -1)
         if [ -n "$FOUND" ]; then
             echo "$FOUND"
             return 0
@@ -113,7 +115,8 @@ find_sim_container() {
         fi
     else
         # Auto-detect: any sim container
-        local FOUND=$(echo "$CONTAINERS" | grep "^sim-" | head -1)
+        local FOUND
+        FOUND=$(echo "$CONTAINERS" | grep "^sim-" | head -1)
         if [ -n "$FOUND" ]; then
             echo "$FOUND"
             return 0
@@ -145,8 +148,7 @@ cmd_dev() {
     print_header
     echo ""
     
-    CONTAINER=$(find_dev_container "$DISTRO")
-    if [ $? -ne 0 ]; then
+    if ! CONTAINER=$(find_dev_container "$DISTRO"); then
         if [ -n "$DISTRO" ]; then
             print_error "Dev container for '$DISTRO' is not running"
             echo ""
@@ -177,8 +179,7 @@ cmd_sim() {
     print_header
     echo ""
     
-    CONTAINER=$(find_sim_container "$ROBOT")
-    if [ $? -ne 0 ]; then
+    if ! CONTAINER=$(find_sim_container "$ROBOT"); then
         if [ -n "$ROBOT" ]; then
             print_error "Simulation container for '$ROBOT' is not running"
         else
