@@ -159,6 +159,38 @@ experimental_robotics/
 > [!TIP]
 > **Your code in `ros2_*_ws/src/` persists on your host machine.** Containers are ephemeral, but your work is safe. Edit files with your favorite IDE on the host, then build inside the container.
 
+## 🪟 WSL 2 Networking (Windows Users)
+
+> [!IMPORTANT]
+> If you develop inside WSL 2 and need your Linux containers to reach physical robots on the LAN, configure mirrored networking so WSL shares the same subnet as Windows.
+
+1. Create or edit `C:\Users\<you>\.wslconfig` and add:
+
+```ini
+[wsl2]
+networkingMode=mirrored
+dnsTunneling=true
+autoProxy=true
+firewall=true
+```
+
+2. Apply the change from PowerShell by shutting down WSL:
+
+```powershell
+wsl --shutdown
+```
+
+3. Restart WSL; your distro now receives an IP on the Windows LAN, so ROS nodes in WSL can discover real robots over Wi-Fi. Allow any firewall prompts the first time.
+
+> [!TIP]
+> Verify the mode with `wslinfo --networking-mode`. It should report `mirrored`.
+
+> [!CAUTION]
+> Mirrored networking requires Windows 11 22H2 or later and a recent WSL build; older versions ignore these settings.
+
+> [!NOTE]
+> Need the exact host IP? Convert the distro to WSL 1 with `wsl --set-version <DistroName> 1`, but you lose WSL 2 kernel features many ROS workflows need.
+
 ## 🎮 Simulator Compatibility
 
 <table>
