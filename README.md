@@ -24,6 +24,7 @@ Docker-based development environment for the Experimental Robotics course at Uni
 - [Setup Guide](#-setup-guide)
 - [Container Overview](#-container-overview)
 - [Workspace Structure](#-workspace-structure)
+- [Windows + WSL Users](#-windows--wsl-users)
 - [Simulator Compatibility](#-simulator-compatibility)
 - [Building ROS2 Packages](#-building-ros2-packages)
 - [Available Commands](#available-commands)
@@ -163,34 +164,56 @@ experimental_robotics/
 > [!TIP]
 > **Your code in `ros2_*_ws/src/` persists on your host machine.** Containers are ephemeral, but your work is safe. Edit files with your favorite IDE on the host, then build inside the container.
 
-## 🪟 WSL 2 Networking (Windows Users)
+## 🪟 Windows + WSL Users
+
+### Networking: reach real robots from WSL 2
 
 > [!IMPORTANT]
-> If you develop inside WSL 2 and need your Linux containers to reach physical robots on the LAN, configure mirrored networking so WSL shares the same subnet as Windows.
+> Mirror Windows networking so your WSL distro lands on the same LAN subnet—essential when you connect to real robots over Wi-Fi.
 
 1. Create or edit `C:\Users\<you>\.wslconfig` and add:
 
-```ini
-[wsl2]
-networkingMode=mirrored
-dnsTunneling=true
-autoProxy=true
-firewall=true
-```
+   ```ini
+   [wsl2]
+   networkingMode=mirrored
+   dnsTunneling=true
+   autoProxy=true
+   firewall=true
+   ```
 
-2. Apply the change from PowerShell by shutting down WSL:
+2. Apply the change from PowerShell:
 
-```powershell
-wsl --shutdown
-```
+   ```powershell
+   wsl --shutdown
+   ```
 
-3. Restart WSL; your distro now receives an IP on the Windows LAN, so ROS nodes in WSL can discover real robots over Wi-Fi. Allow any firewall prompts the first time.
+3. Reopen WSL; the distro now gets an IP on the Windows LAN. Approve any Windows Firewall prompts the first time.
 
 > [!TIP]
-> Verify the mode with `wslinfo --networking-mode`. It should report `mirrored`.
+> Run `wslinfo --networking-mode` to confirm it says `mirrored`.
 
 > [!CAUTION]
-> Mirrored networking requires Windows 11 22H2 or later and a recent WSL build; older versions ignore these settings.
+> Mirrored networking needs Windows 11 22H2+ and an up-to-date WSL. Older builds silently ignore these settings.
+
+### GPU acceleration with Docker Desktop
+
+> [!IMPORTANT]
+> Enable GPU passthrough so Gazebo/RViz can use hardware acceleration inside WSL.
+
+1. Install the latest NVIDIA (or vendor) GPU driver on Windows—reboot afterwards.
+2. Inside WSL, install the CUDA userspace bits (e.g. `sudo apt-get install -y nvidia-cuda-toolkit`) and confirm `nvidia-smi` works.
+3. In Docker Desktop: Settings → Resources → WSL Integration, enable your distro and toggle on GPU support.
+4. Test Docker access:
+
+   ```bash
+   docker run --rm --gpus all nvidia/cuda:12.3.0-runtime-ubuntu22.04 nvidia-smi
+   ```
+
+> [!WARNING]
+> If the test fails, ensure your distro is WSL 2, Docker Desktop runs in WSL mode, and enterprise policies aren’t blocking GPU access.
+
+> [!TIP]
+> On machines without a usable GPU, set `DOCKER_GPUS=0` (or `export NVIDIA_VISIBLE_DEVICES=void`) before calling `./run.sh` to force CPU rendering.
 
 ## 🎮 Simulator Compatibility
 
