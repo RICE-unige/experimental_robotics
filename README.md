@@ -39,6 +39,10 @@ Docker-based development environment for the Experimental Robotics course at Uni
 - **Optional:** NVIDIA GPU + Container Toolkit for GPU-accelerated simulations (automatically falls back to CPU rendering if unavailable)
   - To explicitly disable GPU: `export NVIDIA_VISIBLE_DEVICES=void`
 
+> [!TIP]
+> No discrete GPU? Set `DOCKER_GPUS=0` before running `./run.sh` to force CPU rendering.
+
+
 ## Quick Start
 
 ```bash
@@ -187,9 +191,6 @@ wsl --shutdown
 
 > [!CAUTION]
 > Mirrored networking requires Windows 11 22H2 or later and a recent WSL build; older versions ignore these settings.
-
-> [!NOTE]
-> Need the exact host IP? Convert the distro to WSL 1 with `wsl --set-version <DistroName> 1`, but you lose WSL 2 kernel features many ROS workflows need.
 
 ## 🎮 Simulator Compatibility
 

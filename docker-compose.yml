@@ -18,8 +18,7 @@ x-gpu-nvidia: &gpu-nvidia
     RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
     NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES:-all}
     NVIDIA_DRIVER_CAPABILITIES: ${NVIDIA_DRIVER_CAPABILITIES:-graphics,utility,compute}
-  devices:
-    - /dev/dri:/dev/dri
+  gpus: '${DOCKER_GPUS:-all}'
   deploy:
     resources:
       reservations:
@@ -63,8 +62,6 @@ services:
       - ./config:/root/config:ro
       - ./scripts:/root/scripts:ro
     shm_size: 2gb
-    devices:
-      - /dev/dri:/dev/dri
     deploy:
       resources:
         reservations:
@@ -100,8 +97,6 @@ services:
       - ./config:/root/config:ro
       - ./scripts:/root/scripts:ro
     shm_size: 2gb
-    devices:
-      - /dev/dri:/dev/dri
     deploy:
       resources:
         reservations:
