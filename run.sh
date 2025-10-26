@@ -12,6 +12,15 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Platform detection
+IS_WSL=false
+if grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null; then
+    IS_WSL=true
+elif [ -n "${WSL_DISTRO_NAME:-}" ]; then
+    IS_WSL=true
+fi
+
+# Helpers
 print_header() {
     echo -e "${BLUE}=========================================="
     echo "Experimental Robotics Environment"
@@ -42,8 +51,12 @@ check_docker() {
 }
 
 enable_x11() {
-    print_info "Enabling X11 forwarding for GUI applications..."
-    xhost +local:docker >/dev/null 2>&1 || print_warning "Warning: Could not enable X11 forwarding"
+    if $IS_WSL; then
+        print_info "WSL environment detected - relying on WSLg for X11 access (skipping xhost)"
+    else
+        print_info "Enabling X11 forwarding for GUI applications..."
+        xhost +local:docker >/dev/null 2>&1 || print_warning "Warning: Could not enable X11 forwarding"
+    fi
 }
 
 show_help() {
@@ -199,6 +212,9 @@ cmd_dev() {
     print_header
     echo ""
     print_info "Starting ROS2 $DISTRO development container..."
+    if $IS_WSL; then
+        print_warning "Running under WSL - Docker Desktop (WSL backend) is required. GPU access relies on WSLg; /dev/dri mappings will be ignored."
+    fi
     
     check_docker
     enable_x11
@@ -299,6 +315,9 @@ cmd_sim() {
     echo "  Simulator: $SIMULATOR"
     [ -n "$DEV_DISTRO" ] && echo "  Dev:       $DEV_DISTRO" || echo "  Dev:       No"
     echo ""
+    if $IS_WSL; then
+        print_warning "WSL detected: Gazebo/RViz will use WSLg graphics. For best results keep only one heavy GUI per container and verify GPU support in Docker Desktop."
+    fi
     
     check_docker
     enable_x11
