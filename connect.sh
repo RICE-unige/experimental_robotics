@@ -79,7 +79,7 @@ find_dev_container() {
     
     if [ -n "$DISTRO" ]; then
         # Specific distro requested
-        if echo "$CONTAINERS" | grep -q "^ros2_$DISTRO$"; then
+        if echo "$CONTAINERS" | grep -q "^dev_$DISTRO$"; then
             echo "dev_$DISTRO"
             return 0
         else
@@ -90,8 +90,8 @@ find_dev_container() {
         local JAZZY_RUNNING=false
         local HUMBLE_RUNNING=false
         
-        echo "$CONTAINERS" | grep -q "^ros2_jazzy$" && JAZZY_RUNNING=true
-        echo "$CONTAINERS" | grep -q "^ros2_humble$" && HUMBLE_RUNNING=true
+        echo "$CONTAINERS" | grep -q "^dev_jazzy$" && JAZZY_RUNNING=true
+        echo "$CONTAINERS" | grep -q "^dev_humble$" && HUMBLE_RUNNING=true
         
         # If both are running, let user choose
         if $JAZZY_RUNNING && $HUMBLE_RUNNING; then
@@ -182,20 +182,22 @@ cmd_dev() {
         echo "  1) Jazzy (ROS2 Jazzy)"
         echo "  2) Humble (ROS2 Humble)"
         echo ""
-        read -r -p "Enter choice (1 or 2): " choice
-        
-        case $choice in
-            1)
-                CONTAINER="dev_jazzy"
-                ;;
-            2)
-                CONTAINER="dev_humble"
-                ;;
-            *)
-                print_error "Invalid choice. Use: $0 dev jazzy  OR  $0 dev humble"
-                exit 1
-                ;;
-        esac
+        while true; do
+            read -r -p "Enter choice (1 or 2): " choice
+            case "${choice,,}" in
+                1|jazzy)
+                    CONTAINER="dev_jazzy"
+                    break
+                    ;;
+                2|humble)
+                    CONTAINER="dev_humble"
+                    break
+                    ;;
+                *)
+                    print_warning "Please enter 1 for Jazzy or 2 for Humble."
+                    ;;
+            esac
+        done
         echo ""
     fi
     
