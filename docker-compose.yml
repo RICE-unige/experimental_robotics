@@ -134,6 +134,7 @@ services:
       ros2 launch rosbot_gazebo simulation.launch.py
         robot_model:=rosbot
         mecanum:=${MECANUM:-False}
+        rviz:=False
 
 
 
@@ -198,7 +199,8 @@ services:
       ANTENNA_ROTATION_ANGLE: ${ANTENNA_ROTATION_ANGLE:--1.57}
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - ./extra/rosbot-xl-manipulation/config/rosbot_xl.rviz:/ros2_ws/install/rosbot_xl_manipulation_moveit/share/rosbot_xl_manipulation_moveit/config/moveit.rviz
+      - ./config/rosbot_xl_manipulation/rosbot_xl.rviz:/ros2_ws/install/rosbot_xl_manipulation_moveit/share/rosbot_xl_manipulation_moveit/config/moveit.rviz
+      - ./config/rosbot_xl_manipulation/rviz.launch.py:/ros2_ws/install/rosbot_xl_manipulation_moveit/share/rosbot_xl_manipulation_moveit/launch/rviz.launch.py
     stdin_open: true
     tty: true
     restart: unless-stopped
@@ -212,7 +214,7 @@ services:
     devices:
       - /dev/input
     volumes:
-      - ./extra/rosbot-xl-manipulation/config/joy2twist.yaml:/joy2twist.yaml
+      - ./config/rosbot_xl_manipulation/joy2twist.yaml:/joy2twist.yaml
     command: ["ros2","launch","joy2twist","gamepad_controller.launch.py","joy2twist_params_file:=/joy2twist.yaml"]
 
 
