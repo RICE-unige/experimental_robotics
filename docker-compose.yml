@@ -177,6 +177,8 @@ services:
       QT_QPA_PLATFORM: xcb
     volumes:
       - ./config:/config:ro
+      - ./config/ros_components_description/config/gz_orbbec_astra_remappings.yaml:/ros2_ws/install/ros_components_description/share/ros_components_description/config/gz_orbbec_astra_remappings.yaml:ro
+      - ./config/ros_components_description/launch/gz_orbbec_astra.launch.py:/ros2_ws/install/ros_components_description/share/ros_components_description/launch/gz_orbbec_astra.launch.py:ro
     stdin_open: true
     tty: true
     restart: unless-stopped
