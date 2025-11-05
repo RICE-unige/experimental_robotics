@@ -31,7 +31,6 @@ rm -rf /tmp/runtime-dir
 mkdir -p /tmp/runtime-dir
 chmod 0700 /tmp/runtime-dir
 
-echo "export DISPLAY=localhost:0.0" >> ~/.bashrc 
 
 # Print environment info
 echo "======================================"
