@@ -122,7 +122,7 @@ services:
     environment:
       ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
       RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
-      DISPLAY: ${DISPLAY:-:0}
+      DISPLAY: localhost:0.0
       QT_X11_NO_MITSHM: "1"
       NVIDIA_VISIBLE_DEVICES: all
       NVIDIA_DRIVER_CAPABILITIES: graphics,utility,compute
@@ -147,7 +147,7 @@ services:
     environment:
       ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
       RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
-      DISPLAY: ${DISPLAY:-:0}
+      DISPLAY: localhost:0.0
       QT_X11_NO_MITSHM: "1"
       NVIDIA_VISIBLE_DEVICES: all
       NVIDIA_DRIVER_CAPABILITIES: graphics,utility,compute
@@ -170,7 +170,7 @@ services:
     environment:
       ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
       RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
-      DISPLAY: ${DISPLAY:-:0}
+      DISPLAY: localhost:0.0
       QT_X11_NO_MITSHM: "1"
       NVIDIA_VISIBLE_DEVICES: all
       NVIDIA_DRIVER_CAPABILITIES: graphics,utility,compute
@@ -193,7 +193,7 @@ services:
     environment:
       ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
       RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
-      DISPLAY: ${DISPLAY:-:0}
+      DISPLAY: localhost:0.0
       QT_X11_NO_MITSHM: "1"
       NVIDIA_VISIBLE_DEVICES: all
       NVIDIA_DRIVER_CAPABILITIES: graphics,utility,compute
