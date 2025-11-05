@@ -31,6 +31,8 @@ rm -rf /tmp/runtime-dir
 mkdir -p /tmp/runtime-dir
 chmod 0700 /tmp/runtime-dir
 
+export DISPLAY=localhost:0.0
+
 # Print environment info
 echo "======================================"
 echo "ROS2 Humble Container Ready"
