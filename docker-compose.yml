@@ -50,6 +50,8 @@ services:
     environment:
       RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
       ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
+      ROS2CLI_DISABLE_DAEMON: "1"
+      ROS2CLI_FORCE_NO_DAEMON: "1"
       DISPLAY: ${DISPLAY:-:0}
       QT_X11_NO_MITSHM: "1"
       NVIDIA_VISIBLE_DEVICES: all
@@ -85,6 +87,8 @@ services:
     environment:
       RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
       ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
+      ROS2CLI_DISABLE_DAEMON: "1"
+      ROS2CLI_FORCE_NO_DAEMON: "1"
       DISPLAY: ${DISPLAY:-:0}
       QT_X11_NO_MITSHM: "1"
       NVIDIA_VISIBLE_DEVICES: all
@@ -108,6 +112,41 @@ services:
     stdin_open: true
     tty: true
     command: bash -c "source /opt/ros/jazzy/setup.bash && /root/scripts/entrypoint_jazzy.sh && tail -f /dev/null"
+
+  # ---------------------------------------------------------------------------
+  # Real Robot Bridge (ROS1 Noetic <-> ROS2 Humble)
+  # ---------------------------------------------------------------------------
+
+  ros2_bridge:
+    build:
+      context: ./ros2_bridge
+    image: experimental_robotics/ros2_bridge:local
+    container_name: ros2_bridge
+    profiles: [real-rosbot2r, real-rosbotxl]
+    <<: [*x11-base, *gpu-nvidia]
+    environment:
+      ROS_DISTRO: humble
+      RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
+      ROS2CLI_DISABLE_DAEMON: "1"
+      ROS2CLI_FORCE_NO_DAEMON: "1"
+      DISPLAY: ${DISPLAY:-:0}
+      QT_X11_NO_MITSHM: "1"
+      QT_QPA_PLATFORM: xcb
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: graphics,utility,compute
+      ROS1_MASTER_URI: ${ROS1_MASTER_URI:-}
+      ROS1_LOCAL_IP: ${ROS1_LOCAL_IP:-}
+      ROS1_BRIDGE_CONTAINER_PATH: /root/ros-humble-ros1-bridge
+      ROS1_BRIDGE_TOPICS_FILE: /root/config/ros1_bridge/topics.yaml
+    volumes:
+      - ${ROS1_BRIDGE_HOST_PATH:-./ros-humble-ros1-bridge}:/root/ros-humble-ros1-bridge:ro
+      - ./scripts:/root/scripts:ro
+      - ${ROS1_BRIDGE_TOPICS_FILE:-./config/ros1_bridge/topics.yaml}:/root/config/ros1_bridge/topics.yaml:ro
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    command: ["bash","-lc","/root/scripts/entrypoint_ros2_bridge.sh"]
 
   # ---------------------------------------------------------------------------
   # GAZEBO Simulations
