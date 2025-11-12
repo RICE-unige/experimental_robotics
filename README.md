@@ -22,6 +22,7 @@ Docker-based development environment for the Experimental Robotics course at Uni
 - [Quick Start](#quick-start)
 - [Documentation](#-documentation)
 - [Setup Guide](#-setup-guide)
+- [Real ROSbot Bridge](#-real-rosbot-bridge)
 - [Container Overview](#-container-overview)
 - [Workspace Structure](#-workspace-structure)
 - [Windows + WSL Users](#-windows--wsl-users)
@@ -58,6 +59,9 @@ cd experimental_robotics
 # Start robot simulation
 ./run.sh sim rosbotxl gazebo       # ROSbot XL in Gazebo
 ./run.sh sim rosbot2r gazebo       # ROSbot 2R in Gazebo
+
+# Use a real ROSbot (bridge assets auto-setup on first run)
+./run.sh real rosbot2 --dev jazzy  # ROSbot 2R bridge + Jazzy dev
 
 # Access containers
 docker compose exec dev_jazzy bash
@@ -124,9 +128,67 @@ docker compose exec sim-gazebo-rosbotxl bash
 
 Your dev container and simulation can run simultaneously and communicate via ROS2 topics.
 
+## 🤖 Real ROSbot Bridge
+
+Use the `ros2_bridge` service when you want to run your ROS2 stack against a physical ROSbot that still publishes ROS1/Noetic topics. The workflow follows the official [ros-humble-ros1-bridge-builder](https://github.com/TommyChangUMD/ros-humble-ros1-bridge-builder) tutorial but is fully wired into our Docker Compose project.
+
+1. **Prepare the bridge artifacts (automated).**
+
+   Running `./run.sh real …` now auto-invokes `./scripts/setup_ros1_bridge.sh` the first time you target a real robot. The script clones and builds the upstream bridge builder, extracts the `ros-humble-ros1-bridge/` assets, and places them at the location specified by `ROS1_BRIDGE_HOST_PATH` (defaults to `./ros-humble-ros1-bridge`). You can also run it manually:
+
+   ```bash
+   ./scripts/setup_ros1_bridge.sh
+   ```
+
+   Artifacts are cached per architecture—rerun only if you delete the folder or switch hardware architectures.
+
+2. **Configure networking in `.env`.**
+
+   ```ini
+   ROS1_MASTER_URI=http://192.168.77.2:11311   # ROSbot (ROS1) IP
+   ROS1_LOCAL_IP=192.168.77.5                  # Your laptop IP on the same Wi-Fi
+   ROS1_BRIDGE_HOST_PATH=./ros-humble-ros1-bridge
+   ROS1_BRIDGE_TOPICS_FILE=./config/ros1_bridge/topics.yaml
+   ```
+
+   `ROS1_LOCAL_IP` is exported as both `ROS_IP` and `ROS_HOSTNAME` inside the bridge container. Edit `config/ros1_bridge/topics.yaml` to decide which topics/queues are bridged (the file lives on the host so you can tweak it without rebuilding).
+
+3. **Start the ROS1 master on the robot (or a ROS1 container).**
+
+   ```bash
+   source /opt/ros/noetic/setup.bash
+   roscore
+   ```
+
+4. **Launch the ROS1↔ROS2 bridge (optionally along with a dev container).**
+
+   ```bash
+   ./run.sh real rosbot2 --dev jazzy
+   ```
+
+   The bridge container automatically pushes `config/ros1_bridge/topics.yaml` into the ROS1 parameter server and then starts `ros1_bridge parameter_bridge`, so only the topic pairs you listed will be bridged.
+
+5. **Connect and test.**
+
+   ```bash
+   ./connect.sh bridge              # Watch ros1_bridge logs
+   ./connect.sh dev jazzy          # Run ROS2 nodes from your workspace
+
+   # Inside the dev container
+   ros2 topic list
+   ros2 run teleop_twist_keyboard teleop_twist_keyboard
+
+   # On the ROS1 side (robot, SSH, or container)
+   rostopic list
+   rostopic echo /cmd_vel
+   ```
+
+> [!TIP]
+> The bridge service forces Fast DDS (`rmw_fastrtps_cpp`) across all containers so QoS stays consistent between dev ↔ sim ↔ real hardware. After editing `config/ros1_bridge/topics.yaml`, run `./run.sh stop real` followed by `./run.sh real …` to reload the updated mapping.
+
 ## 📦 Container Overview
 
-This environment uses **two types of containers** that work together:
+This environment uses **three cooperating container roles**:
 
 ### Development Containers (`dev_jazzy` / `dev_humble`)
 - **Purpose:** Your workspace for writing, building, and testing ROS2 code
@@ -143,7 +205,13 @@ This environment uses **two types of containers** that work together:
 - **Use this for:** Testing your algorithms, visualizing robot behavior, collecting sensor data
 - **Note:** Generally read-only - avoid modifying unless you need custom robot configurations
 
-**How they connect:** Both containers use `network_mode: host`, allowing seamless ROS2 communication. Topics published in your dev container are visible in the simulation, and vice versa.
+**How they connect:** All containers use `network_mode: host`, allowing seamless ROS2 communication. Topics published in your dev container are visible in the simulation (or bridge) and vice versa.
+
+### ROS1 Bridge (`ros2_bridge`)
+- **Purpose:** Runs `ros1_bridge parameter_bridge` so ROS2 nodes can talk to a ROS1-based ROSbot over the network.
+- **What's required:** `.env` entries for `ROS1_MASTER_URI`, `ROS1_LOCAL_IP`, and the editable `config/ros1_bridge/topics.yaml`. `./run.sh real …` auto-runs `scripts/setup_ros1_bridge.sh` to populate the `ros-humble-ros1-bridge` assets (or run it manually ahead of time).
+- **Use this for:** Any classworks/lab session that uses the physical robot instead of the simulator.
+- **Workflow:** `./run.sh real rosbot2 --dev jazzy` → edit `config/ros1_bridge/topics.yaml` as needed → `./connect.sh bridge` to check real rosbot's topics and it can also be used as a dev container too.
 
 ## 📁 Workspace Structure
 
@@ -153,6 +221,8 @@ experimental_robotics/
 │   └── src/                # 👉 Put your packages here
 ├── ros2_humble_ws/         # ROS2 Humble workspace (mounted to dev container)
 │   └── src/                # 👉 Put your packages here
+├── config/ros1_bridge/     # Parameter bridge topic mappings (editable on host)
+│   └── topics.yaml
 ├── config/                 # Robot configuration files (mounted read-only)
 ├── scripts/                # Container entrypoint scripts
 ├── run.sh                  # Main launcher script
@@ -337,6 +407,7 @@ ros2 launch my_package my_launch.py
 ./connect.sh dev humble           # Connect to Humble dev
 ./connect.sh sim                  # Connect to simulation (auto-detect)
 ./connect.sh sim rosbotxl         # Connect to ROSbot XL sim
+./connect.sh bridge               # Connect to the ROS1↔ROS2 bridge
 ./connect.sh list                 # List all running containers
 ```
 
@@ -345,7 +416,8 @@ ros2 launch my_package my_launch.py
 
 ### Management
 ```bash
-./run.sh stop [dev|sim|all]       # Stop containers
+./run.sh real rosbot2 --dev jazzy  # Bridge to a physical ROSbot
+./run.sh stop [dev|sim|real|all]  # Stop containers
 ./run.sh clean                    # Remove all containers
 ./run.sh status                   # Show running containers
 ./run.sh help                     # Show full help
@@ -361,7 +433,11 @@ Customize the environment by editing the `.env` file in the project root:
 | `DISPLAY` | `:0` | X11 display for GUI applications (auto-detected). |
 | `MECANUM` | `False` | Set to `True` for mecanum wheels, `False` for differential drive. |
 | `NVIDIA_VISIBLE_DEVICES` | `all` | GPU visibility. Set to `void` to disable GPU. |
-| `RMW_IMPLEMENTATION` | `rmw_fastrtps_cpp` | ROS2 middleware. Alternative: `rmw_cyclonedds_cpp`. |
+| `ROS_RMW_IMPLEMENTATION` | `rmw_fastrtps_cpp` | ROS2 middleware (Fast DDS by default). Alternative: `rmw_cyclonedds_cpp`. |
+| `ROS1_MASTER_URI` | `http://192.168.1.1:11311` | URL of the ROS1 master running on the physical ROSbot. |
+| `ROS1_LOCAL_IP` | `192.168.1.2` | Your laptop’s IP on the robot network. Exported as both `ROS_IP` and `ROS_HOSTNAME` inside the bridge. |
+| `ROS1_BRIDGE_HOST_PATH` | `./ros-humble-ros1-bridge` | Host path where the auto-setup stores the `ros-humble-ros1-bridge` assets (mounted into `ros2_bridge`). |
+| `ROS1_BRIDGE_TOPICS_FILE` | `./config/ros1_bridge/topics.yaml` | Host path to the topic mapping file that parameter_bridge loads into the ROS1 parameter server. |
 | `O3DE_VNC_PORT` | `5901` | VNC port for O3DE simulator access. |
 | `O3DE_VNC_RESOLUTION` | `1920x1080` | VNC display resolution for O3DE. |
 
