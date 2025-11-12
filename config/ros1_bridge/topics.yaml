@@ -5,6 +5,12 @@ topics:
   - topic: /camera/rgb/image_raw/compressed
     type: sensor_msgs/msg/CompressedImage
     queue_size: 10
+  - topic: /camera/rgb/image_raw
+    type: sensor_msgs/msg/Image
+    queue_size: 10
+  - topic: /camera/rgb/camera_info
+    type: sensor_msgs/msg/CameraInfo
+    queue_size: 10
   - topic: /cmd_vel
     type: geometry_msgs/msg/Twist
     queue_size: 10
