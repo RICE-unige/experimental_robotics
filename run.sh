@@ -117,16 +117,35 @@ show_help() {
     echo "        docker exec -it sim-gazebo-rosbotxl bash"
     echo "        ros2 run teleop_twist_keyboard teleop_twist_keyboard"
     echo ""
+    echo "  real <robot> [options]"
+    echo "      Start the ROS1↔ROS2 bridge for a physical robot."
+    echo ""
+    echo "      Arguments:"
+    echo "        <robot>      Robot platform: rosbot2r (alias: rosbot2), rosbotxl"
+    echo ""
+    echo "      Options:"
+    echo "        --dev <distro>    Also start dev container (humble or jazzy)"
+    echo "        --build           Rebuild bridge container before starting"
+    echo ""
+    echo "      Examples:"
+    echo "        $0 real rosbot2               # Start bridge only"
+    echo "        $0 real rosbotxl --dev jazzy  # Bridge + Jazzy dev container"
+    echo ""
+    echo "      Notes:"
+    echo "        • Configure ROS1_MASTER_URI and ROS1_LOCAL_IP in .env first"
+    echo "        • Bridge assets auto-download via ./scripts/setup_ros1_bridge.sh (respects ROS1_BRIDGE_HOST_PATH)"
+    echo ""
     echo "  stop [target]"
     echo "      Stop running containers."
     echo ""
     echo "      Arguments:"
-    echo "        [target]     What to stop: dev, sim, or all (default: all)"
+    echo "        [target]     What to stop: dev, sim, real, or all (default: all)"
     echo ""
     echo "      Examples:"
     echo "        $0 stop                         # Stop all containers"
     echo "        $0 stop sim                     # Stop only simulation containers"
     echo "        $0 stop dev                     # Stop only dev containers"
+    echo "        $0 stop real                    # Stop only the ROS1↔ROS2 bridge"
     echo ""
     echo "  status"
     echo "      Show all running containers and their status."
@@ -350,6 +369,109 @@ cmd_sim() {
     echo ""
 }
 
+# Command: real
+cmd_real() {
+    local ROBOT="$1"
+    shift || true
+
+    local DEV_DISTRO=""
+    local BUILD_FLAG=""
+
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --dev)
+                DEV_DISTRO="$2"
+                shift 2
+                ;;
+            --build)
+                BUILD_FLAG="--build"
+                shift
+                ;;
+            *)
+                print_error "Unknown option: $1"
+                exit 1
+                ;;
+        esac
+    done
+
+    if [ -z "$ROBOT" ]; then
+        print_error "No robot specified!"
+        echo "Available real robots: rosbot2r (alias: rosbot2), rosbotxl"
+        exit 1
+    fi
+
+    local NORMALIZED_ROBOT="$ROBOT"
+    if [ "$ROBOT" = "rosbot2" ]; then
+        NORMALIZED_ROBOT="rosbot2r"
+    fi
+
+    local BASE_PROFILE=""
+    case "$NORMALIZED_ROBOT" in
+        rosbot2r)
+            BASE_PROFILE="real-rosbot2r"
+            ;;
+        rosbotxl)
+            BASE_PROFILE="real-rosbotxl"
+            ;;
+        *)
+            print_error "Invalid robot: $ROBOT"
+            echo "Available real robots: rosbot2r (alias: rosbot2), rosbotxl"
+            exit 1
+            ;;
+    esac
+
+    local PROFILE_FLAGS=(--profile "$BASE_PROFILE")
+
+    if [ -n "$DEV_DISTRO" ]; then
+        case "$DEV_DISTRO" in
+            humble|jazzy)
+                PROFILE_FLAGS+=(--profile "dev-$DEV_DISTRO")
+                ;;
+            *)
+                print_error "Invalid dev distro: $DEV_DISTRO"
+                echo "Valid distros: humble, jazzy"
+                exit 1
+                ;;
+        esac
+    fi
+
+    print_header
+    echo ""
+    print_info "Real robot configuration:"
+    echo "  Robot: $NORMALIZED_ROBOT"
+    if [ -n "$DEV_DISTRO" ]; then
+        echo "  Dev:   $DEV_DISTRO"
+    else
+        echo "  Dev:   No"
+    fi
+    echo ""
+    print_info "Ensure ROS1_MASTER_URI / ROS1_LOCAL_IP are set in your .env"
+    echo ""
+
+    check_docker
+    print_info "Ensuring ROS1↔ROS2 bridge artifacts are prepared..."
+    if ! ./scripts/setup_ros1_bridge.sh; then
+        print_error "Unable to prepare ROS1 bridge assets. See logs above."
+        exit 1
+    fi
+    enable_x11
+
+    if [ -n "$BUILD_FLAG" ]; then
+        print_info "Rebuilding containers before start..."
+    fi
+
+    docker compose "${PROFILE_FLAGS[@]}" up -d ${BUILD_FLAG}
+
+    echo ""
+    print_success "✓ Real robot bridge started!"
+    echo ""
+    print_info "Active bridge containers:"
+    docker compose ps --filter "status=running" | grep -E "ros2_bridge|dev_" || true
+    echo ""
+    print_info "View logs with: docker compose logs -f ros2_bridge"
+    echo ""
+}
+
 # Command: stop
 cmd_stop() {
     local TARGET="${1:-all}"
@@ -368,17 +490,21 @@ cmd_stop() {
                            --profile o3de-rosbotxl \
                            down --remove-orphans 2>/dev/null
             ;;
+        real)
+            docker compose --profile real-rosbot2r --profile real-rosbotxl down --remove-orphans 2>/dev/null
+            ;;
         all)
             # Stop all profiles explicitly
             docker compose --profile dev-humble --profile dev-jazzy \
                            --profile gazebo-rosbot2r --profile gazebo-rosbotxl --profile gazebo-rosbotxl-manip --profile gazebo-panther \
                            --profile webots-rosbot2r --profile webots-rosbotxl \
                            --profile o3de-rosbotxl \
+                           --profile real-rosbot2r --profile real-rosbotxl \
                            down --remove-orphans 2>/dev/null
             ;;
         *)
             print_error "Invalid target: $TARGET"
-            echo "Valid targets: dev, sim, all"
+            echo "Valid targets: dev, sim, real, all"
             exit 1
             ;;
     esac
@@ -395,7 +521,14 @@ cmd_clean() {
     
     if [[ "$response" =~ ^[Yy]$ ]]; then
         print_info "Cleaning up..."
-        docker compose down -v --rmi local --remove-orphans 2>/dev/null || true
+        local CLEAN_PROFILES=(
+            --profile dev-humble --profile dev-jazzy
+            --profile gazebo-rosbot2r --profile gazebo-rosbotxl --profile gazebo-rosbotxl-manip --profile gazebo-panther
+            --profile webots-rosbot2r --profile webots-rosbotxl
+            --profile o3de-rosbotxl
+            --profile real-rosbot2r --profile real-rosbotxl
+        )
+        docker compose "${CLEAN_PROFILES[@]}" down -v --rmi local --remove-orphans 2>/dev/null || true
         print_success "✓ Cleanup complete"
     else
         print_info "Cancelled"
@@ -427,6 +560,9 @@ case "$COMMAND" in
         ;;
     sim)
         cmd_sim "$@"
+        ;;
+    real)
+        cmd_real "$@"
         ;;
     stop)
         cmd_stop "$@"

@@ -8,6 +8,7 @@ set -e
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
@@ -23,6 +24,10 @@ print_error() {
 
 print_success() {
     echo -e "${GREEN}$1${NC}"
+}
+
+print_warning() {
+    echo -e "${YELLOW:-\033[1;33m}$1${NC}"
 }
 
 print_info() {
@@ -41,6 +46,7 @@ show_help() {
     echo "TARGETS"
     echo "  dev [distro]        Connect to dev container (jazzy or humble)"
     echo "  sim [robot]         Connect to simulation container"
+    echo "  bridge              Connect to ROS1↔ROS2 bridge container"
     echo "  list                Show all running containers"
     echo ""
     echo "OPTIONS"
@@ -55,6 +61,8 @@ show_help() {
     echo "  $0 sim rosbotxl     # Connect to ROSbot XL simulation"
     echo "  $0 sim rosbot2r           # Connect to ROSbot 2R simulation"
     echo "  $0 sim rosbotxl-manip     # Connect to ROSbot XL manip simulation"
+    echo ""
+    echo "  $0 bridge           # Connect to the ros2_bridge container"
     echo ""
     echo "  $0 list             # List all running containers"
     echo ""
@@ -136,6 +144,18 @@ find_sim_container() {
             return 1
         fi
     fi
+}
+
+find_bridge_container() {
+    local CONTAINERS
+    CONTAINERS=$(get_running_containers)
+
+    if echo "$CONTAINERS" | grep -q "^ros2_bridge$"; then
+        echo "ros2_bridge"
+        return 0
+    fi
+
+    return 1
 }
 
 # List containers
@@ -237,6 +257,48 @@ cmd_sim() {
     docker compose exec "$CONTAINER" "$SHELL"
 }
 
+# Connect to bridge
+cmd_bridge() {
+    local SHELL="${1:-bash}"
+
+    print_header
+    echo ""
+
+    if ! CONTAINER=$(find_bridge_container); then
+        print_error "Bridge container is not running"
+        echo ""
+        echo "Start it with: ./run.sh real rosbot2"
+        echo ""
+        exit 1
+    fi
+
+    print_info "Connecting to $CONTAINER..."
+    echo ""
+    print_success "✓ Connected! (exit with 'exit' or Ctrl+D)"
+    echo ""
+    print_info "Preparing ROS environment..."
+
+    local ROS_DISTRO_IN_CONTAINER
+    ROS_DISTRO_IN_CONTAINER=$(docker compose exec -T "$CONTAINER" /bin/sh -c 'printf "%s" "${ROS_DISTRO:-humble}"' 2>/dev/null | tr -d '\r')
+
+    local BRIDGE_PATH_IN_CONTAINER
+    BRIDGE_PATH_IN_CONTAINER=$(docker compose exec -T "$CONTAINER" /bin/sh -c 'printf "%s" "${ROS1_BRIDGE_CONTAINER_PATH:-/root/ros-humble-ros1-bridge}"' 2>/dev/null | tr -d '\r')
+
+    local ROS_DISTRO_SAFE="${ROS_DISTRO_IN_CONTAINER:-humble}"
+    local BRIDGE_PATH_SAFE="${BRIDGE_PATH_IN_CONTAINER:-/root/ros-humble-ros1-bridge}"
+
+    local BRIDGE_PATH_QUOTED TARGET_SHELL_QUOTED
+    printf -v BRIDGE_PATH_QUOTED "%q" "$BRIDGE_PATH_SAFE"
+    printf -v TARGET_SHELL_QUOTED "%q" "$SHELL"
+
+    local SOURCE_CMD
+    printf -v SOURCE_CMD 'source /opt/ros/%s/setup.bash' "$ROS_DISTRO_SAFE"
+    SOURCE_CMD+=" && if [ -f ${BRIDGE_PATH_QUOTED}/install/local_setup.bash ]; then source ${BRIDGE_PATH_QUOTED}/install/local_setup.bash; fi"
+    SOURCE_CMD+=" && exec ${TARGET_SHELL_QUOTED}"
+
+    docker compose exec "$CONTAINER" bash -lc "$SOURCE_CMD"
+}
+
 # Main
 if [ $# -eq 0 ]; then
     # No arguments: show list and let user choose
@@ -253,6 +315,9 @@ case "$COMMAND" in
         ;;
     sim)
         cmd_sim "$@"
+        ;;
+    bridge|real)
+        cmd_bridge "$@"
         ;;
     list|ls)
         cmd_list
