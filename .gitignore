@@ -22,6 +22,7 @@ Thumbs.db
 # Docker related
 .env.local
 .env.override
+ros-humble-ros1-bridge/
 
 # Python
 __pycache__/
@@ -40,6 +41,7 @@ ENV/
 # Temporary files
 *.tmp
 *.temp
+.cache/
 
 # Logs
 *.log
