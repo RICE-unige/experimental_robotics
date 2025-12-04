@@ -1,0 +1,10 @@
+services:
+  debug_noetic:
+    image: ros:noetic
+    container_name: debug_noetic
+    network_mode: host
+    ipc: host
+    environment:
+      - ROS_MASTER_URI=http://192.168.1.9:11311
+      - ROS_IP=192.168.1.7
+    command: tail -f /dev/null

@@ -186,6 +186,50 @@ Use the `ros2_bridge` service when you want to run your ROS2 stack against a phy
 > [!TIP]
 > The bridge service forces Fast DDS (`rmw_fastrtps_cpp`) across all containers so QoS stays consistent between dev ↔ sim ↔ real hardware. After editing `config/ros1_bridge/topics.yaml`, run `./run.sh stop real` followed by `./run.sh real …` to reload the updated mapping.
 
+### Multiple Bridges
+
+To manage multiple robots simultaneously, define them in `config/bridges.yaml`:
+
+```yaml
+bridges:
+  - name: rosbot_alpha
+    ros_domain_id: 57
+    ros1_master_uri: http://192.168.1.101:11311
+    ros1_local_ip: 192.168.1.50
+  - name: rosbot_beta
+    ros_domain_id: 58
+    ros1_master_uri: http://192.168.1.102:11311
+    ros1_local_ip: 192.168.1.50
+```
+
+**Usage:**
+```bash
+./run.sh bridges        # Start all configured bridges
+./run.sh stop bridges   # Stop all bridges
+```
+
+### Debugging Connectivity
+
+If the bridge connects but no data flows (e.g., `ros2 topic echo` hangs), use the debug container to verify direct ROS1 connectivity, bypassing the bridge.
+
+1. **Start the debug container:**
+   ```bash
+   docker compose -f docker-compose.debug.yaml up -d
+   ```
+
+2. **Enter and test:**
+   ```bash
+   docker exec -it debug_noetic bash
+   source /opt/ros/noetic/setup.bash
+   rostopic list             # Should list topics
+   rostopic echo /scan       # Should show data
+   ```
+
+> [!WARNING]
+> **If `rostopic echo` fails in the debug container:**
+> The issue is likely on the **robot side** (e.g., firewall blocking incoming connections or incorrect `ROS_IP`).
+> **Fix:** Allow incoming traffic on the robot: `sudo ufw allow from <your-subnet>`.
+
 ## 📦 Container Overview
 
 This environment uses **three cooperating container roles**:
