@@ -88,6 +88,7 @@ RUN apt-get update && \
       ros-jazzy-plotjuggler-ros \
       # Communication
       ros-jazzy-rmw-fastrtps-cpp \
+      ros-jazzy-rmw-cyclonedds-cpp \
       ros-jazzy-example-interfaces \
       ros-jazzy-demo-nodes-cpp \
       ros-jazzy-demo-nodes-py \
@@ -143,7 +144,7 @@ WORKDIR $ROS2_WS
 
 # Setup environment and Gazebo
 RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc && \
-    echo "export RMW_IMPLEMENTATION=rmw_fastrtps_cpp" >> /root/.bashrc && \
+    echo "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" >> /root/.bashrc && \
     echo "export ROS_DOMAIN_ID=\${ROS_DOMAIN_ID:-43}" >> /root/.bashrc && \
     echo "alias build='colcon build --symlink-install'" >> /root/.bashrc && \
     echo "alias source_ws='source install/setup.bash'" >> /root/.bashrc && \

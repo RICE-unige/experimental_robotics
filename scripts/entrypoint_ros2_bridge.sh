@@ -55,8 +55,9 @@ source /opt/ros/humble/setup.bash
 log "Sourcing ros1_bridge from $BRIDGE_PATH..."
 source "$BRIDGE_PATH/install/local_setup.bash"
 
-export RMW_IMPLEMENTATION="${RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}"
+export RMW_IMPLEMENTATION="${RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}"
 export ROS_DOMAIN_ID="${ROS_DOMAIN_ID:-43}"
+export BRIDGE_PARAM_LOADER_NAME="${BRIDGE_PARAM_LOADER_NAME:-/ros2_bridge_param_loader}"
 
 log "Bridge configuration:"
 log "  ROS_MASTER_URI: $ROS_MASTER_URI_VALUE"
@@ -90,7 +91,7 @@ if "topics" not in data:
     sys.exit(1)
 
 proxy = ServerProxy(master_uri)
-caller = "/ros2_bridge_param_loader"
+caller = os.environ["BRIDGE_PARAM_LOADER_NAME"]
 
 try:
     proxy.deleteParam(caller, "topics")

@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Prevent rapid restart loops on error
+trap 'echo "Error occurred! Sleeping for 30s..."; sleep 30' ERR
+
 # Source ROS2 Jazzy
 source /opt/ros/jazzy/setup.bash
 
@@ -11,7 +14,7 @@ if [ -f /root/ros2_ws/install/setup.bash ]; then
 fi
 
 # Set up environment variables
-export RMW_IMPLEMENTATION=${RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
+export RMW_IMPLEMENTATION=${RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}
 export ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-43}
 export ROS_DISTRO=jazzy
 

@@ -7,7 +7,7 @@ x-x11-base: &x11-base
     DISPLAY: ${DISPLAY:-:0}
     QT_X11_NO_MITSHM: "1"
     ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
-    RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
+    RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}
   volumes:
     - /tmp/.X11-unix:/tmp/.X11-unix:rw
   network_mode: host
@@ -15,7 +15,7 @@ x-x11-base: &x11-base
 
 x-gpu-nvidia: &gpu-nvidia
   environment:
-    RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
+    RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}
     NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES:-all}
     NVIDIA_DRIVER_CAPABILITIES: ${NVIDIA_DRIVER_CAPABILITIES:-graphics,utility,compute}
   gpus: '${DOCKER_GPUS:-all}'
@@ -26,6 +26,36 @@ x-gpu-nvidia: &gpu-nvidia
           - driver: nvidia
             count: 1
             capabilities: [gpu]
+
+x-ros2-bridge-base: &ros2-bridge-base
+  build:
+    context: ./ros2_bridge
+  image: experimental_robotics/ros2_bridge:local
+  <<: [*x11-base, *gpu-nvidia]
+  environment:
+    ROS_DISTRO: humble
+    RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}
+    ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
+    ROS2CLI_DISABLE_DAEMON: "1"
+    ROS2CLI_FORCE_NO_DAEMON: "1"
+    DISPLAY: ${DISPLAY:-:0}
+    QT_X11_NO_MITSHM: "1"
+    QT_QPA_PLATFORM: xcb
+    NVIDIA_VISIBLE_DEVICES: all
+    NVIDIA_DRIVER_CAPABILITIES: graphics,utility,compute
+    ROS1_MASTER_URI: ${ROS1_MASTER_URI:-}
+    ROS1_LOCAL_IP: ${ROS1_LOCAL_IP:-}
+    ROS1_BRIDGE_CONTAINER_PATH: /root/ros-humble-ros1-bridge
+    ROS1_BRIDGE_TOPICS_FILE: /root/config/ros1_bridge/topics.yaml
+    BRIDGE_PARAM_LOADER_NAME: /ros2_bridge_param_loader
+  volumes:
+    - ${ROS1_BRIDGE_HOST_PATH:-./ros-humble-ros1-bridge}:/root/ros-humble-ros1-bridge:ro
+    - ./scripts:/root/scripts:ro
+    - ${ROS1_BRIDGE_TOPICS_FILE:-./config/ros1_bridge/topics.yaml}:/root/config/ros1_bridge/topics.yaml:ro
+  stdin_open: true
+  tty: true
+  restart: unless-stopped
+  command: ["bash","-lc","/root/scripts/entrypoint_ros2_bridge.sh"]
 
 
 
@@ -48,7 +78,7 @@ services:
     network_mode: host
     ipc: host
     environment:
-      RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
+      RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}
       ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
       ROS2CLI_DISABLE_DAEMON: "1"
       ROS2CLI_FORCE_NO_DAEMON: "1"
@@ -85,7 +115,7 @@ services:
     network_mode: host
     ipc: host
     environment:
-      RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
+      RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}
       ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
       ROS2CLI_DISABLE_DAEMON: "1"
       ROS2CLI_FORCE_NO_DAEMON: "1"
@@ -118,35 +148,24 @@ services:
   # ---------------------------------------------------------------------------
 
   ros2_bridge:
-    build:
-      context: ./ros2_bridge
-    image: experimental_robotics/ros2_bridge:local
+    <<: *ros2-bridge-base
     container_name: ros2_bridge
     profiles: [real-rosbot2r, real-rosbotxl]
-    <<: [*x11-base, *gpu-nvidia]
-    environment:
-      ROS_DISTRO: humble
-      RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
-      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
-      ROS2CLI_DISABLE_DAEMON: "1"
-      ROS2CLI_FORCE_NO_DAEMON: "1"
-      DISPLAY: ${DISPLAY:-:0}
-      QT_X11_NO_MITSHM: "1"
-      QT_QPA_PLATFORM: xcb
-      NVIDIA_VISIBLE_DEVICES: all
-      NVIDIA_DRIVER_CAPABILITIES: graphics,utility,compute
-      ROS1_MASTER_URI: ${ROS1_MASTER_URI:-}
-      ROS1_LOCAL_IP: ${ROS1_LOCAL_IP:-}
-      ROS1_BRIDGE_CONTAINER_PATH: /root/ros-humble-ros1-bridge
-      ROS1_BRIDGE_TOPICS_FILE: /root/config/ros1_bridge/topics.yaml
-    volumes:
-      - ${ROS1_BRIDGE_HOST_PATH:-./ros-humble-ros1-bridge}:/root/ros-humble-ros1-bridge:ro
-      - ./scripts:/root/scripts:ro
-      - ${ROS1_BRIDGE_TOPICS_FILE:-./config/ros1_bridge/topics.yaml}:/root/config/ros1_bridge/topics.yaml:ro
-    stdin_open: true
-    tty: true
-    restart: unless-stopped
-    command: ["bash","-lc","/root/scripts/entrypoint_ros2_bridge.sh"]
+
+  # Example of a second bridge
+  # ros2_bridge_2:
+  #   <<: *ros2-bridge-base
+  #   container_name: ros2_bridge_2
+  #   profiles: [real-rosbot2r]
+  #   environment:
+  #     ROS_DOMAIN_ID: 44
+  #     ROS1_MASTER_URI: http://<robot-ip>:11311
+  #     ROS1_LOCAL_IP: <laptop-ip>
+  #     BRIDGE_PARAM_LOADER_NAME: /ros2_bridge_param_loader_2
+  #   volumes:
+  #     - ${ROS1_BRIDGE_HOST_PATH:-./ros-humble-ros1-bridge}:/root/ros-humble-ros1-bridge:ro
+  #     - ./scripts:/root/scripts:ro
+  #     - ./config/ros1_bridge/topics_2.yaml:/root/config/ros1_bridge/topics.yaml:ro
 
   # ---------------------------------------------------------------------------
   # GAZEBO Simulations
@@ -160,7 +179,7 @@ services:
     <<: [*x11-base, *gpu-nvidia]
     environment:
       ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
-      RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
+      RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}
       DISPLAY: ${DISPLAY:-:0}
       QT_X11_NO_MITSHM: "1"
       NVIDIA_VISIBLE_DEVICES: all
@@ -170,10 +189,10 @@ services:
     tty: true
     restart: unless-stopped
     command: >
-      ros2 launch rosbot_gazebo simulation.launch.py
+      bash -c "ros2 launch rosbot_gazebo simulation.launch.py
         robot_model:=rosbot
         mecanum:=${MECANUM:-False}
-        rviz:=False
+        rviz:=False || (echo 'Simulation failed! Sleeping...' && sleep 30)"
 
 
 
@@ -185,7 +204,7 @@ services:
     <<: [*x11-base, *gpu-nvidia]
     environment:
       ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
-      RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
+      RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}
       DISPLAY: ${DISPLAY:-:0}
       QT_X11_NO_MITSHM: "1"
       NVIDIA_VISIBLE_DEVICES: all
@@ -195,10 +214,10 @@ services:
     tty: true
     restart: unless-stopped
     command: >
-      ros2 launch rosbot_xl_gazebo simulation.launch.py
+      bash -c "ros2 launch rosbot_xl_gazebo simulation.launch.py
         robot_model:=rosbot_xl
         mecanum:=${MECANUM:-True}
-        camera_model:=intel_realsense_d435
+        camera_model:=intel_realsense_d435 || (echo 'Simulation failed! Sleeping...' && sleep 30)"
 
   # Panther + Gazebo (includes built-in RViz2)
   sim-gazebo-panther:
@@ -208,7 +227,7 @@ services:
     <<: [*x11-base, *gpu-nvidia]
     environment:
       ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
-      RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
+      RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}
       DISPLAY: ${DISPLAY:-:0}
       QT_X11_NO_MITSHM: "1"
       NVIDIA_VISIBLE_DEVICES: all
@@ -221,7 +240,7 @@ services:
     stdin_open: true
     tty: true
     restart: unless-stopped
-    command: ["ros2", "launch", "panther_gazebo", "simulation.launch.py", "components_config_path:=/config/panther_components.yaml"]
+    command: ["bash", "-c", "ros2 launch panther_gazebo simulation.launch.py components_config_path:=/config/panther_components.yaml || (echo 'Simulation failed! Sleeping...' && sleep 30)"]
 
   # ROSbot XL + Manipulator (Gazebo + MoveIt2)
   sim-gazebo-rosbotxl-manip:
@@ -231,7 +250,7 @@ services:
     <<: [*x11-base, *gpu-nvidia]
     environment:
       ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
-      RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
+      RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}
       DISPLAY: ${DISPLAY:-:0}
       QT_X11_NO_MITSHM: "1"
       NVIDIA_VISIBLE_DEVICES: all
@@ -245,7 +264,7 @@ services:
     stdin_open: true
     tty: true
     restart: unless-stopped
-    command: ["ros2","launch","rosbot_xl_manipulation_gazebo","simulation.launch.py","mecanum:=${MECANUM:-True}","antenna_rotation_angle:=${ANTENNA_ROTATION_ANGLE:--1.57}"]
+    command: ["bash", "-c", "ros2 launch rosbot_xl_manipulation_gazebo simulation.launch.py mecanum:=${MECANUM:-True} antenna_rotation_angle:=${ANTENNA_ROTATION_ANGLE:--1.57} || (echo 'Simulation failed! Sleeping...' && sleep 30)"]
 
   joy2twist-rosbotxl-manip:
     image: husarion/joy2twist:humble-1.0.0-20230204-stable
@@ -273,7 +292,7 @@ services:
     <<: [*x11-base, *gpu-nvidia]
     environment:
       ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
-      RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
+      RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}
       DISPLAY: ${DISPLAY:-:0}
       QT_X11_NO_MITSHM: "1"
       NVIDIA_VISIBLE_DEVICES: all
@@ -282,7 +301,7 @@ services:
     stdin_open: true
     tty: true
     restart: unless-stopped
-    command: ros2 launch webots_ros2_husarion rosbot_launch.py
+    command: bash -c "ros2 launch webots_ros2_husarion rosbot_launch.py || (echo 'Simulation failed! Sleeping...' && sleep 30)"
 
   # ROSbot XL + Webots
   sim-webots-rosbotxl:
@@ -292,7 +311,7 @@ services:
     <<: [*x11-base, *gpu-nvidia]
     environment:
       ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
-      RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
+      RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}
       DISPLAY: ${DISPLAY:-:0}
       QT_X11_NO_MITSHM: "1"
       NVIDIA_VISIBLE_DEVICES: all
@@ -301,7 +320,7 @@ services:
     stdin_open: true
     tty: true
     restart: unless-stopped
-    command: ros2 launch webots_ros2_husarion rosbot_xl_launch.py
+    command: bash -c "ros2 launch webots_ros2_husarion rosbot_xl_launch.py || (echo 'Simulation failed! Sleeping...' && sleep 30)"
 
   # ---------------------------------------------------------------------------
   # O3DE Simulation
@@ -317,7 +336,7 @@ services:
     <<: [*x11-base, *gpu-nvidia]
     environment:
       ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-43}
-      RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
+      RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}
       DISPLAY: ${DISPLAY:-:0}
       QT_X11_NO_MITSHM: "1"
       NVIDIA_VISIBLE_DEVICES: all

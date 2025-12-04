@@ -82,6 +82,7 @@ RUN apt-get update && \
       ros-humble-plotjuggler-ros \
       # Communication
       ros-humble-rmw-fastrtps-cpp \
+      ros-humble-rmw-cyclonedds-cpp \
       ros-humble-example-interfaces \
       ros-humble-demo-nodes-cpp \
       ros-humble-demo-nodes-py \
@@ -131,7 +132,7 @@ WORKDIR $ROS2_WS
 
 # Setup environment and Gazebo
 RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc && \
-    echo "export RMW_IMPLEMENTATION=rmw_fastrtps_cpp" >> /root/.bashrc && \
+    echo "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" >> /root/.bashrc && \
     echo "export ROS_DOMAIN_ID=\${ROS_DOMAIN_ID:-43}" >> /root/.bashrc && \
     echo "alias build='colcon build --symlink-install'" >> /root/.bashrc && \
     echo "alias source_ws='source install/setup.bash'" >> /root/.bashrc && \

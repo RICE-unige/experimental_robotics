@@ -6,6 +6,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         python3-yaml \
         ros-humble-control-msgs \
+        ros-humble-rmw-cyclonedds-cpp \
         ros-humble-rviz2 \
         ros-humble-rqt \
         ros-humble-rqt-common-plugins \
