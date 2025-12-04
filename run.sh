@@ -472,6 +472,43 @@ cmd_real() {
     echo ""
 }
 
+# Command: bridges
+cmd_bridges() {
+    print_header
+    echo ""
+    print_info "Starting multiple bridges from config/bridges.yaml..."
+    
+    check_docker
+    
+    # Generate compose file
+    if ! python3 scripts/generate_bridges.py; then
+        print_error "Failed to generate bridge configuration."
+        exit 1
+    fi
+    
+    if [ ! -f "docker-compose.bridges.yaml" ]; then
+        print_error "docker-compose.bridges.yaml was not generated."
+        exit 1
+    fi
+
+    print_info "Ensuring ROS1↔ROS2 bridge artifacts are prepared..."
+    if ! ./scripts/setup_ros1_bridge.sh; then
+        print_error "Unable to prepare ROS1 bridge assets."
+        exit 1
+    fi
+    enable_x11
+
+    # Start bridges
+    docker compose -f docker-compose.yml -f docker-compose.bridges.yaml up -d
+
+    echo ""
+    print_success "✓ Bridges started!"
+    echo ""
+    print_info "Active bridge containers:"
+    docker compose -f docker-compose.yml -f docker-compose.bridges.yaml ps
+    echo ""
+}
+
 # Command: stop
 cmd_stop() {
     local TARGET="${1:-all}"
@@ -493,9 +530,22 @@ cmd_stop() {
         real)
             docker compose --profile real-rosbot2r --profile real-rosbotxl down --remove-orphans 2>/dev/null
             ;;
+        bridges)
+            if [ -f "docker-compose.bridges.yaml" ]; then
+                docker compose -f docker-compose.yml -f docker-compose.bridges.yaml down --remove-orphans 2>/dev/null
+            else
+                print_warning "docker-compose.bridges.yaml not found."
+            fi
+            ;;
         all)
             # Stop all profiles explicitly
-            docker compose --profile dev-humble --profile dev-jazzy \
+            local COMPOSE_ARGS="-f docker-compose.yml"
+            if [ -f "docker-compose.bridges.yaml" ]; then
+                COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.bridges.yaml"
+            fi
+            
+            docker compose $COMPOSE_ARGS \
+                           --profile dev-humble --profile dev-jazzy \
                            --profile gazebo-rosbot2r --profile gazebo-rosbotxl --profile gazebo-rosbotxl-manip --profile gazebo-panther \
                            --profile webots-rosbot2r --profile webots-rosbotxl \
                            --profile o3de-rosbotxl \
@@ -504,7 +554,7 @@ cmd_stop() {
             ;;
         *)
             print_error "Invalid target: $TARGET"
-            echo "Valid targets: dev, sim, real, all"
+            echo "Valid targets: dev, sim, real, bridges, all"
             exit 1
             ;;
     esac
@@ -563,6 +613,9 @@ case "$COMMAND" in
         ;;
     real)
         cmd_real "$@"
+        ;;
+    bridges)
+        cmd_bridges "$@"
         ;;
     stop)
         cmd_stop "$@"

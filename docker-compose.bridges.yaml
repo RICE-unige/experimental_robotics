@@ -1,0 +1,173 @@
+services:
+  bridge_rosbot_1:
+    build:
+      context: ./ros2_bridge
+    command:
+    - bash
+    - -lc
+    - /root/scripts/entrypoint_ros2_bridge.sh
+    container_name: bridge_rosbot_1
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - capabilities:
+            - gpu
+            count: 1
+            driver: nvidia
+    environment:
+      BRIDGE_PARAM_LOADER_NAME: /ros2_bridge_param_loader_rosbot_1
+      DISPLAY: ${DISPLAY:-:0}
+      NVIDIA_DRIVER_CAPABILITIES: graphics,utility,compute
+      NVIDIA_VISIBLE_DEVICES: all
+      QT_QPA_PLATFORM: xcb
+      QT_X11_NO_MITSHM: '1'
+      RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}
+      ROS1_BRIDGE_CONTAINER_PATH: /root/ros-humble-ros1-bridge
+      ROS1_BRIDGE_TOPICS_FILE: /root/config/ros1_bridge/topics.yaml
+      ROS1_LOCAL_IP: 192.168.1.7
+      ROS1_MASTER_URI: http://192.168.1.100:11311
+      ROS2CLI_DISABLE_DAEMON: '1'
+      ROS2CLI_FORCE_NO_DAEMON: '1'
+      ROS_DISTRO: humble
+      ROS_DOMAIN_ID: '57'
+    gpus: ${DOCKER_GPUS:-all}
+    image: experimental_robotics/ros2_bridge:local
+    ipc: host
+    network_mode: host
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    volumes:
+    - ${ROS1_BRIDGE_HOST_PATH:-./ros-humble-ros1-bridge}:/root/ros-humble-ros1-bridge:ro
+    - ./scripts:/root/scripts:ro
+    - ${ROS1_BRIDGE_TOPICS_FILE:-./config/ros1_bridge/topics.yaml}:/root/config/ros1_bridge/topics.yaml:ro
+  bridge_rosbot_2:
+    build:
+      context: ./ros2_bridge
+    command:
+    - bash
+    - -lc
+    - /root/scripts/entrypoint_ros2_bridge.sh
+    container_name: bridge_rosbot_2
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - capabilities:
+            - gpu
+            count: 1
+            driver: nvidia
+    environment:
+      BRIDGE_PARAM_LOADER_NAME: /ros2_bridge_param_loader_rosbot_2
+      DISPLAY: ${DISPLAY:-:0}
+      NVIDIA_DRIVER_CAPABILITIES: graphics,utility,compute
+      NVIDIA_VISIBLE_DEVICES: all
+      QT_QPA_PLATFORM: xcb
+      QT_X11_NO_MITSHM: '1'
+      RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}
+      ROS1_BRIDGE_CONTAINER_PATH: /root/ros-humble-ros1-bridge
+      ROS1_BRIDGE_TOPICS_FILE: /root/config/ros1_bridge/topics.yaml
+      ROS1_LOCAL_IP: 192.168.1.7
+      ROS1_MASTER_URI: http://192.168.1.101:11311
+      ROS2CLI_DISABLE_DAEMON: '1'
+      ROS2CLI_FORCE_NO_DAEMON: '1'
+      ROS_DISTRO: humble
+      ROS_DOMAIN_ID: '58'
+    gpus: ${DOCKER_GPUS:-all}
+    image: experimental_robotics/ros2_bridge:local
+    ipc: host
+    network_mode: host
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    volumes:
+    - ${ROS1_BRIDGE_HOST_PATH:-./ros-humble-ros1-bridge}:/root/ros-humble-ros1-bridge:ro
+    - ./scripts:/root/scripts:ro
+    - ${ROS1_BRIDGE_TOPICS_FILE:-./config/ros1_bridge/topics.yaml}:/root/config/ros1_bridge/topics.yaml:ro
+  bridge_rosbot_3:
+    build:
+      context: ./ros2_bridge
+    command:
+    - bash
+    - -lc
+    - /root/scripts/entrypoint_ros2_bridge.sh
+    container_name: bridge_rosbot_3
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - capabilities:
+            - gpu
+            count: 1
+            driver: nvidia
+    environment:
+      BRIDGE_PARAM_LOADER_NAME: /ros2_bridge_param_loader_rosbot_3
+      DISPLAY: ${DISPLAY:-:0}
+      NVIDIA_DRIVER_CAPABILITIES: graphics,utility,compute
+      NVIDIA_VISIBLE_DEVICES: all
+      QT_QPA_PLATFORM: xcb
+      QT_X11_NO_MITSHM: '1'
+      RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}
+      ROS1_BRIDGE_CONTAINER_PATH: /root/ros-humble-ros1-bridge
+      ROS1_BRIDGE_TOPICS_FILE: /root/config/ros1_bridge/topics.yaml
+      ROS1_LOCAL_IP: 192.168.1.7
+      ROS1_MASTER_URI: http://192.168.1.102:11311
+      ROS2CLI_DISABLE_DAEMON: '1'
+      ROS2CLI_FORCE_NO_DAEMON: '1'
+      ROS_DISTRO: humble
+      ROS_DOMAIN_ID: '59'
+    gpus: ${DOCKER_GPUS:-all}
+    image: experimental_robotics/ros2_bridge:local
+    ipc: host
+    network_mode: host
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    volumes:
+    - ${ROS1_BRIDGE_HOST_PATH:-./ros-humble-ros1-bridge}:/root/ros-humble-ros1-bridge:ro
+    - ./scripts:/root/scripts:ro
+    - ${ROS1_BRIDGE_TOPICS_FILE:-./config/ros1_bridge/topics.yaml}:/root/config/ros1_bridge/topics.yaml:ro
+  bridge_rosbot_4:
+    build:
+      context: ./ros2_bridge
+    command:
+    - bash
+    - -lc
+    - /root/scripts/entrypoint_ros2_bridge.sh
+    container_name: bridge_rosbot_4
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - capabilities:
+            - gpu
+            count: 1
+            driver: nvidia
+    environment:
+      BRIDGE_PARAM_LOADER_NAME: /ros2_bridge_param_loader_rosbot_4
+      DISPLAY: ${DISPLAY:-:0}
+      NVIDIA_DRIVER_CAPABILITIES: graphics,utility,compute
+      NVIDIA_VISIBLE_DEVICES: all
+      QT_QPA_PLATFORM: xcb
+      QT_X11_NO_MITSHM: '1'
+      RMW_IMPLEMENTATION: ${ROS_RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}
+      ROS1_BRIDGE_CONTAINER_PATH: /root/ros-humble-ros1-bridge
+      ROS1_BRIDGE_TOPICS_FILE: /root/config/ros1_bridge/topics.yaml
+      ROS1_LOCAL_IP: 192.168.1.7
+      ROS1_MASTER_URI: http://192.168.1.5:11311
+      ROS2CLI_DISABLE_DAEMON: '1'
+      ROS2CLI_FORCE_NO_DAEMON: '1'
+      ROS_DISTRO: humble
+      ROS_DOMAIN_ID: '60'
+    gpus: ${DOCKER_GPUS:-all}
+    image: experimental_robotics/ros2_bridge:local
+    ipc: host
+    network_mode: host
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    volumes:
+    - ${ROS1_BRIDGE_HOST_PATH:-./ros-humble-ros1-bridge}:/root/ros-humble-ros1-bridge:ro
+    - ./scripts:/root/scripts:ro
+    - ${ROS1_BRIDGE_TOPICS_FILE:-./config/ros1_bridge/topics.yaml}:/root/config/ros1_bridge/topics.yaml:ro

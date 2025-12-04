@@ -1,0 +1,17 @@
+bridges:
+  - name: rosbot_1 # Bettery Good
+    ros_domain_id: 57
+    ros1_master_uri: http://192.168.1.100:11311
+    ros1_local_ip: 192.168.1.7
+  - name: rosbot_2 # Battery Good
+    ros_domain_id: 58
+    ros1_master_uri: http://192.168.1.101:11311
+    ros1_local_ip: 192.168.1.7
+  - name: rosbot_3 # Battery Good
+    ros_domain_id: 59
+    ros1_master_uri: http://192.168.1.102:11311
+    ros1_local_ip: 192.168.1.7
+  - name: rosbot_4 # Battery Good
+    ros_domain_id: 60
+    ros1_master_uri: http://192.168.1.5:11311
+    ros1_local_ip: 192.168.1.7
