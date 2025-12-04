@@ -540,6 +540,16 @@ colcon build --symlink-install
 rosdep install --from-paths src --ignore-src -r -y
 ```
 
+### Host Connectivity Issues (Echo Hanging)
+
+If `ros2 topic list` works on your host but `ros2 topic echo` hangs, it's likely a **Shared Memory (SHM)** issue (FastDDS tries to use SHM between host and container but fails due to permission/segment mismatches).
+
+**Fix:** Force UDP transport on your host.
+```bash
+export FASTRTPS_DEFAULT_PROFILES_FILE=$(pwd)/config/fastdds_no_shm.xml
+ros2 topic echo /scan
+```
+
 > [!NOTE]
 > **Simulation Runs Slowly**
 >
